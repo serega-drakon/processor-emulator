@@ -5,14 +5,14 @@
 2. BX - base, 
 3. CX - counter,
 4. DX - data, 
-5. SI
-6. DI
-7. SP
-8. DP
+5. SI - 
+6. DI - 
+7. SP - 
+8. DP - 
 9. EFLAGS
-   1. CF
-   2. ZF
-   3. SF – 
+   1. CF - carry flag
+   2. ZF - zero flag
+   3. SF – sign flag
    4. OF – overflow flag
     
 
