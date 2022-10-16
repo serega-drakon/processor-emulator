@@ -32,7 +32,7 @@
 ###### а сюда описание (но пока думаю понятно что это делает)
 3. #### pop \<op>
 
-4. #### lea \<reg> \<mem> – reg = [mem] 
+4. #### lea \<reg> \<mem> – reg = *[mem] 
 
 ### Arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
 
