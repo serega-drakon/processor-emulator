@@ -1,22 +1,37 @@
-Процессор я решил сделать 32 битным подобием x86.
+### Процессор я решил сделать 32 битным подобием x86.
 
 ## Описания всех регистров:
-1. AX - accumulator, предназначен для сохранения результата исполнения
-2. BX - base, 
-3. CX - counter,
-4. DX - data, 
-5. SI - 
-6. DI - 
-7. SP - 
-8. DP - 
+#### Все регистры - 32 битные.
+1. AX - accumulator
+2. BX - base
+3. CX - counter
+4. DX - data
+5. SI - stack index
+6. DI - data index
+7. SP - stack pointer
+8. DP - data pointer
 9. EFLAGS
    1. CF - carry flag
    2. ZF - zero flag
    3. SF – sign flag
    4. OF – overflow flag
-    
 
 ## Семантика моего ассемблера:
+#### operators:
+Регистры обозначаются так: `%reg` где `reg` - имя соответствующего регистра.\
+`[%reg]` - is a pointed by `reg` memory.\
+Полная адресация выглядит так:\
+`D[POINTER,INDEX,STEP]` – similar [D + POINTER + STEP * INDEX]
+
+### Data Movement Instructions:
+
+1. #### mov \<op1> \<op2> – op2 = op1
+
+2. #### push \<op>
+
+3. #### pop \<op>
+
+4. #### lea \<reg> \<mem> – reg = [mem] 
 
 ### Arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
 
@@ -42,9 +57,9 @@
 * jl \<label> (jump when less than)
 * jle \<label> (jump when less than or equal to)
 
-#### call, ret — Subroutine call and return
-call <label> – безусловный переход с сохранением текущего положения в регистре\
-ret – возврат по значению регистра и еще чото
+#### call, ret — Subroutine call and return (жесть этож имба)
+call <label> – безусловный переход с сохранением текущего положения в стеке\
+ret – возврат по вершине стека
 
-
+###### Заметка: после отладки этого добавить поддержку строк
 
