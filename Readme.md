@@ -65,6 +65,8 @@ Allocating Storage Space for Uninitialized Data
 
 ### Control Flow instructions:
 
+Labels encode by: `.<name>`
+
 #### J* – условный переход
 * JMP \<label> (jump)
 * JE \<label> (jump when equal)
@@ -79,6 +81,9 @@ Allocating Storage Space for Uninitialized Data
 CALL <label> – безусловный переход с сохранением текущего положения в стеке\
 RET – возврат по вершине стека
 ###### Потом тут всякие варики типа retq накидать
+
+#### End of execution:
+END – closes program
 
 ###### Заметка: после отладки этого добавить поддержку строк
 
