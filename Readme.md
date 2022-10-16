@@ -21,8 +21,8 @@
 Регистры обозначаются так: `%reg` где `reg` - имя соответствующего регистра.\
 `[%reg]` - is a pointed by `reg` memory.\
 Полная адресация выглядит так:\
-`D[POINTER,INDEX,STEP]` – similar [D + POINTER + STEP * INDEX]
-Константы:`$CONST`\
+`D[POINTER,INDEX,STEP]` – similar [D + POINTER + STEP * INDEX]\
+Константы:`$CONST`
 
 ### Data Movement Instructions:
 
