@@ -56,8 +56,8 @@ Allocating Storage Space for Uninitialized Data
 1. **ADD \<op1> \<op2>**  – op1 = op1 + op2.
 2. **SUB \<op1> \<op2>** – op1 = op1 - op2.
 3. **INC \<op>, DEC \<op>** – op++, op--.
-4. **IMUL \<op1> \<op2>, IMUL \<op0> \<op1> \<op2>** – op1 *= op2, op0 = op1 * op2.
-5. **IDIV \<op1> \<op2>, IDIV \<op0> \<op1> \<op2>** – op1 /= op2, op0 = op1 / op2.
+4. **IMUL \<op1> \<op2>** – op1 *= op2, op0 = op1 * op2.
+5. **IDIV \<op1> \<op2>** – op1 /= op2, op0 = op1 / op2.
 6. **AND, OR, XOR \<op1> \<op2>** – op1 = op1 &|^ op2. //bitwize operator
 7. **NOT <op>** – op = ~op.
 8. **NEG <op>** – op = -op.

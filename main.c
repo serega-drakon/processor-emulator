@@ -1,6 +1,11 @@
 #include <stdio.h>
+#include "compilator/compilator.h"
+
+int getOp(FILE* input, int op[]);
 
 int main() {
-    printf("Hello, World!\n");
+    FILE* input = fopen("../inputCode.txt", "r");
+    compileFile(input, NULL);
+    fclose(input);
     return 0;
 }
