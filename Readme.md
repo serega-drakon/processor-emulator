@@ -64,16 +64,16 @@ Labels encode by: `.<name>`
 
 #### J* – условный переход
 * JMP \<label> (jump)
-* JE \<label> (jump when equal)
+* JE_lbl \<label> (jump when equal)
 * JNE \<label> (jump when not equal)
-* JZ \<label> (jump when last result was zero)
-* JG \<label> (jump when greater than)
-* JGE \<label> (jump when greater than or equal to)
-* JL \<label> (jump when less than)
+* JZ_lbl \<label> (jump when last result was zero)
+* JG_lbl \<label> (jump when greater than)
+* JGE_lbl \<label> (jump when greater than or equal to)
+* JL_lbl \<label> (jump when less than)
 * JLE \<label> (jump when less than or equal to)
 
-#### CALL, RET — Subroutine call and return (жесть этож имба)
-CALL <label> – безусловный переход с сохранением текущего положения в стеке\
+#### CALL_lbl, RET — Subroutine call and return (жесть этож имба)
+CALL_lbl <label> – безусловный переход с сохранением текущего положения в стеке\
 RET – возврат по вершине стека
 
 #### End of execution:

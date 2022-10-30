@@ -14,4 +14,6 @@ void *getLast(Stack *ptrStack);
 int getsize(Stack *ptrStack);
 void stackFree(Stack *ptrStack);
 
+void myMemCpy(const void *toPtr, const void *fromPtr, int sizeInBytes);
+
 #endif //PROCESSOR_EMULATOR_MEMORY_H
