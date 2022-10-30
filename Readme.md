@@ -23,45 +23,40 @@
 Регистры обозначаются так: `%reg` где `reg` - имя соответствующего регистра.
 
 Полная адресация выглядит так:\
-`D[POINTER,INDEX,STEP]` – similar [D + POINTER + STEP * INDEX]\
-`[%reg]` - is a pointed by `reg` memory.
+`(POINTER,INDEX,STEP)` – similar [D + POINTER + STEP * INDEX]\
+For an example:
+`(%reg)` - is a pointed by `reg` memory.
 
 Константы:`$CONST`
 
 ##### Переменные:
-Allocating Storage Space for Initialized Data:
-1. **\<name> DB \<const>** – 1 byte
-2. **\<name> DW \<const>** – 2 bytes
-3. **\<name> DD \<const>** – 4 bytes
- 
-Allocating Storage Space for Uninitialized Data
-1. **\<name> RESB** – 1 byte
-2. **\<name> RESW** – 2 bytes
-3. **\<name> RESD** – 4 bytes
-
-###### мб добавить поддержку 8- и 16-ых СС
+1. **DV <name>**
+2. **DA <count> <name>**
 
 ### Data Movement Instructions:
 
 1. #### MOV \<op1> \<op2> – op2 = op1
 ###### Потом тут всякие варики типа movq накидать
-2. #### PUSH \<op>
+2. #### PUSH \<reg>
 ###### а сюда описание (но пока думаю понятно что это делает)
-3. #### POP \<op>
-
-4. #### LEA \<reg> \<mem> – reg = *[mem] 
+3. #### POP \<reg>
 
 ### Arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
 
-1. **ADD \<op1> \<op2>**  – op1 = op1 + op2.
-2. **SUB \<op1> \<op2>** – op1 = op1 - op2.
-3. **INC \<op>, DEC \<op>** – op++, op--.
-4. **IMUL \<op1> \<op2>** – op1 *= op2, op0 = op1 * op2.
-5. **IDIV \<op1> \<op2>** – op1 /= op2, op0 = op1 / op2.
-6. **AND, OR, XOR \<op1> \<op2>** – op1 = op1 &|^ op2. //bitwize operator
-7. **NOT <op>** – op = ~op.
-8. **NEG <op>** – op = -op.
-9. **SHL, SHR, SHRI \<op1> \<op2>** – op1 << op2, (unsgined) op1 >> op2, (signed) op1 >> op2.
+1. **ADD**  – op1 = op1 + op2.
+2. **SUB** – op1 = op1 - op2.
+3. **INC** – op++, op--.
+4. **IMUL** – op1 *= op2, op0 = op1 * op2.
+5. **IDIV** – op1 /= op2, op0 = op1 / op2.
+6. **AND, OR, XOR** – op1 = op1 &|^ op2. //bitwize operator
+7. **NOT** – op = ~op.
+8. **NEG** – op = -op.
+9. **SHL, SHR, SHRI** – op1 << op2, (unsgined) op1 >> op2, (signed) op1 >> op2.
+10. **CMP** - как вычисление a - b пез потери знака
+    1. CF = 1, если перенос из старего бита или заем в него
+    2. ZF = 1, если a == b
+    3. SF = 1, если (a - b) < 0
+    4. OF = 1, если происходит переполнение в дополнительном коде
 
 ### Control Flow instructions:
 
@@ -80,10 +75,7 @@ Labels encode by: `.<name>`
 #### CALL, RET — Subroutine call and return (жесть этож имба)
 CALL <label> – безусловный переход с сохранением текущего положения в стеке\
 RET – возврат по вершине стека
-###### Потом тут всякие варики типа retq накидать
 
 #### End of execution:
 END – closes program
-
-###### Заметка: после отладки этого добавить поддержку строк
 

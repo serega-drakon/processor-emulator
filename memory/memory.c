@@ -41,7 +41,6 @@ struct Stack_ {
     void *data; ///< Pointer to data
     void *buffForErr;///< buffForErr returns if error occurred
     void *buffForRes;///< buffForRes points to result of stack_main() func
-    unsigned long long int hash; ///< Hash value of data array //ебать объявление конечно
     int size; ///< Size of one element of data in bytes
     int num; ///< Number of elements of data (malloced memory)
     int pos; ///< Next free position of stack (pop/push/getlast)
@@ -237,7 +236,6 @@ int stackErrorCheck(Stack *ptrStack) {
     //ака так бы было если бы переменная error существовала
 }
 
-
 ///Выводит инфу об ошибках в консоль.
 void stackErrorPrint(Stack *ptrStack){
     if (ptrStack != NULL) {
@@ -325,9 +323,6 @@ void *stack_w(Stack *ptrStack, int x, void *ptrValue) {
     else
         EXIT;
 }
-
-
-
 
 /// Stack function: Push
 void *push(Stack *ptrStack, void *ptrValue) {
