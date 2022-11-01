@@ -93,7 +93,9 @@ enum encodingRegs_{
     DP
 };
 
-///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть
+///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
+///У таких типов как pointer или label слишком сложная структура, чтобы доставать их из одной функции вместе с остальными,
+///под них я написал функции getPointer и searchFor.
 enum others_{
     NotDefined = -2, //It may be name of variable
     Error = -1, //it exactly is error
@@ -238,6 +240,7 @@ int getType(const int op[]){
     return NotDefined;
 }
 
+///Кодировка указателей
 enum ptrTypes_{  //сделал специально удобную кодировку(см. ф. getpointer)
     Ptr_reg_reg_reg,      //000
     Ptr_reg_reg_const,    //001
@@ -293,7 +296,7 @@ u_int32_t* getConst16D(const int op[]){
     return &num;
 }
 
-///Возвращает указатель на сформированную ссылку из 13 байт (лепит ссылки из переменных и меток)
+///Возвращает указатель на сформированную ссылку из 13 байт (может лепить ссылки из переменных и меток)
 char* getPointer(const int op[], const struct Defines_ def, const unsigned int lineNum){
     static char result[13]; //1 байт под тип и 12 под ссылку
     int i = 0, j; int type;
@@ -331,12 +334,14 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
     int type2, type3;
     int buff[MAXOP], buff2[MAXOP], buff3[MAXOP];
     j = 0;
+    //достаю 1й операнд
     for(i = 1; op[i] == '\t' || op[i] == ' '; i++);
     for (; op[i] != ';' && op[i] != ')' && op[i] != ' ' && op[i] != '\t'; i++, j++)
         buff[j] = op[i];
     buff[j] = '\0';
     type = getType(buff);
 
+    //достаю 2й операнд
     for(; op[i] == '\t' || op[i] == ' '; i++);
     if(op[i] == ';')
         for(i++; op[i] == '\t' || op[i] == ' '; i++);
@@ -350,6 +355,7 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
     else
         type2 = Nothing;
 
+    //достаю 3й операнд
     for(; op[i] == '\t' || op[i] == ' '; i++);
     if(op[i] == ';')
         for(i++; op[i] == '\t' || op[i] == ' '; i++);
