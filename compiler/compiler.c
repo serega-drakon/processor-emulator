@@ -8,6 +8,7 @@
 #define POINTER_SIZE 13
 #define NONE (-1)
 
+///Вывод ошибки name с выводом операнда op, возвращает 1
 #define ERROROP(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -15,6 +16,8 @@ for (int index = 0; op[index] != '\0'; index++) \
 printf("\n");                                   \
 return 1; } while(0)
 
+///Вывод ошибки name с выводом операнда op, возвращает NULL \n
+///Использую в функции getPointer
 #define ERROROP2(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -22,6 +25,7 @@ for (int index = 0; op[index] != '\0'; index++) \
 printf("\n");                                   \
 return NULL; } while(0)
 
+///Вывод ошибки name без вывода операнда
 #define ERROR(name) do {                \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 return 1; } while(0)
@@ -50,6 +54,7 @@ int compareStrStack(const int a[], Stack* ptrStack, int index){
     return 0;
 }
 
+///Это не кодировка, а просто перечисление количества соответствущих типов команд
 enum count_{
     CountOfRegs = 8,
     CountOfOperators2arg = 1,
@@ -60,6 +65,7 @@ enum count_{
     CountOfProgramControlNoArg = 2
 };
 
+///Кодировка всех команд
 enum encodingOps_{
     MOV_reg_reg = 1,
     MOV_reg_const,
@@ -75,6 +81,7 @@ enum encodingOps_{
     RET, END
 };
 
+///Кодировка всех регистров
 enum encodingRegs_{
     AX = 0,
     BX,
@@ -86,6 +93,7 @@ enum encodingRegs_{
     DP
 };
 
+///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть
 enum others_{
     NotDefined = -2, //It may be name of variable
     Error = -1, //it exactly is error
@@ -97,6 +105,7 @@ enum others_{
     Label
 };
 
+///Представления команд
 const char *operators_[] = {
         "MOV",
         "PUSH",
@@ -118,13 +127,13 @@ const char *operators_[] = {
         "DV",
         "DA",
         "JMP",
-        "JE_lbl",
-        "JZ_lbl",
-        "JG_lbl",
-        "JGE_lbl",
-        "JL_lbl",
+        "JE",
+        "JZ",
+        "JG",
+        "JGE",
+        "JL",
         "JLE",
-        "CALL_lbl",
+        "CALL",
         "RET",
         "END"
 };
@@ -217,10 +226,14 @@ int getType(const int op[]){
         return PUSH_reg;
     if(compareStr(op, operators_[2]))
         return POP_reg;
-    for(i = 0; i < 26; i++){
+    for(i = 0; i < 24; i++){
         if(compareStr(op, operators_[3 + i]))
             return ADD + i; //возвращает код операнда
     }
+    if(compareStr(op, operators_[27]))
+        return RET;
+    if(compareStr(op, operators_[28]))
+        return END;
     if(op[0] == '\0') return Error;
     return NotDefined;
 }
@@ -236,6 +249,7 @@ enum ptrTypes_{  //сделал специально удобную кодиро
     Ptr_const_const_const //111
 };
 
+///Набор динамических массивов, которые я использую
 struct Defines_{
     Stack* ptrVariableNames;    ///<имена переменных
     Stack* ptrVariableValues;   ///<величины ссылок на переменные
@@ -298,7 +312,7 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
         else
             ERROROP2(Undefined lable,op);
     }
-    if(type == NotDefined){
+    if(type == NotDefined){ //переменная
         char found = 0;
         for(i = 0; i < getsize(def.ptrVariableNames) && !found; i++)
             if(compareStrStack(op, def.ptrVariableNames, i)) found = 1;
@@ -420,6 +434,7 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
     return result;
 }
 
+///Конструктор
 void definesInit(struct Defines_ *def){
     def->ptrVariableNames = stackInit(MAXOP * sizeof(int));   ///<имена переменных
     def->ptrVariableValues = stackInit(REG_SIZE);         ///<величины ссылок на переменные
@@ -427,6 +442,7 @@ void definesInit(struct Defines_ *def){
     def->ptrLabelValues = stackInit(REG_SIZE);            ///<величины ссылок меток
 }
 
+///Деструктор
 void definesFree(struct Defines_ *def){
     stackFree(def->ptrVariableNames);
     stackFree(def->ptrVariableValues);
@@ -434,6 +450,7 @@ void definesFree(struct Defines_ *def){
     stackFree(def->ptrLabelValues);
 }
 
+///Основная функция, вызывает все остальные
 int compileFile(FILE* input, Stack* ptrProgram){
     int op[MAXOP];
     int type;

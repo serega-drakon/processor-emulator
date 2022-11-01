@@ -1,3 +1,2 @@
-ADD ADD ADD
 .lbl
-MOV %ax (.lbl)
+JLE .lbl
