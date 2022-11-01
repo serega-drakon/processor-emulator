@@ -469,17 +469,18 @@ int compileFile(FILE* input, Stack* ptrProgram){
 
     while(getOp(input, op, &lineNum) > 0) {
         type = getType(op);
-
         switch (type) {
             case MOV_reg_reg: //операнды с переменной длиной 3-21 байт
                 if (getOp(input, op, &lineNum) > 0) {
                     type = getType(op);
                 } else
                     ERROR(There are no operand);
+
                 if (getOp(input, op2, &lineNum) > 0) {
                     type2 = getType(op2);
                 } else
                     ERROR(There are no operand);
+
                 if (type >= Register && type < Register + CountOfRegs) {
                     if (type2 >= Register && type2 < Register + CountOfRegs)
                         code = MOV_reg_reg;
@@ -498,6 +499,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         ERROROP(Invalid 2 argument to MOV, op2);
                 } else
                     ERROROP(Invalid 1 argument to MOV, op2);
+
                 push(ptrProgram, &code);
 
                 if (type >= Register && type < Register + CountOfRegs) {
