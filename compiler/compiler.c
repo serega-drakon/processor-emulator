@@ -460,12 +460,13 @@ int compileFile(FILE* input, Stack* ptrProgram){
     definesInit(&def);
     u_int32_t varCounter = 0; ///<содержит кол-во уже занятых битов переменными (= указатель на след свободный бит)
 
-    int op2[MAXOP];
-    int type2;
-    unsigned char code;
-    u_int32_t value;
-    int search;
-    int i;
+    //Часто используемые переменные:
+    int op2[MAXOP];     ///< Содержит второй оператор
+    int type2;         ///< Содержит тип второго оператора
+    unsigned char code;    ///< Обычно содержит кодировку оператора/операнда
+    u_int32_t value;       ///< Обычно содержит значение метки или переменной (место в памяти)
+    int search;          ///< Индекс найденного элемента через функции seach..
+    int i;            ///< Индекс для циклов for
 
     while(getOp(input, op, &lineNum) > 0) {
         type = getType(op);
