@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include "../encoding/encodings.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -53,103 +54,6 @@ int compareStrStack(const int a[], Stack* ptrStack, int index){
         return 1;
     return 0;
 }
-
-///Это не кодировка, а просто перечисление количества соответствущих типов команд
-enum count_{
-    CountOfRegs = 8,
-    CountOfOperators2arg = 1,
-    CountOfStackOperators = 2,
-    CountOfStackArithmetics = 14,
-    CountOfDefineVars = 2,
-    CountOfProgramControlArg = 8,
-    CountOfProgramControlNoArg = 2
-};
-
-///Кодировка всех команд
-enum encodingOps_{
-    MOV_reg_reg = 1,
-    MOV_reg_const,
-    MOV_reg_mem,
-    MOV_mem_reg,
-    MOV_mem_const,
-    PUSH_reg,
-    POP_reg,
-    ADD, SUB, INC, IMUL, IDIV, AND, OR, XOR, NOT, NEG, SHL, SHR, SHRL, CMP,
-    DV, DA,
-    JMP_lbl, JE_lbl, JZ_lbl, JG_lbl, JGE_lbl, JL_lbl, JLE_lbl, CALL_lbl,
-    JMP_ptr, JE_ptr, JZ_ptr, JG_ptr, JGE_ptr, JL_ptr, JLE_ptr, CALL_ptr, //варианты когда нужно перейти по значению, лежащему по данной ссылке
-    RET, END
-};
-
-///Кодировка всех регистров
-enum encodingRegs_{
-    AX = 0,
-    BX,
-    CX,
-    DX,
-    SI,
-    DI,
-    SP,
-    DP
-};
-
-///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
-///У таких типов как pointer или label слишком сложная структура, чтобы доставать их из одной функции вместе с остальными,
-///под них я написал функции getPointer и searchFor.
-enum others_{
-    NotDefined = -2, //It may be name of variable
-    Error = -1, //it exactly is error
-    Nothing = 0,
-    Register = END + 1, //регистры по задумке не должны кодироваться, записал их для удобства вывода из getType()
-    Const16 = Register + CountOfRegs,
-    Const10,
-    Pointer,
-    Label
-};
-
-///Представления команд
-const char *operators_[] = {
-        "MOV",
-        "PUSH",
-        "POP",
-        "ADD",
-        "SUB",
-        "INC",
-        "IMUL",
-        "IDIV",
-        "AND",
-        "OR",
-        "XOR",
-        "NOT",
-        "NEG",
-        "SHL",
-        "SHR",
-        "SHRL",
-        "CMP",
-        "DV",
-        "DA",
-        "JMP",
-        "JE",
-        "JZ",
-        "JG",
-        "JGE",
-        "JL",
-        "JLE",
-        "CALL",
-        "RET",
-        "END"
-};
-
-const char *registers_[] = { //емае емае пошло говно по трубам
-        "ax",
-        "bx",
-        "cx",
-        "dx",
-        "si",
-        "di",
-        "sp",
-        "dp"
-};
 
 ///Получает следующий операнд или оператор из файла\n
 ///Возвращает длину найденной строки\n
@@ -239,18 +143,6 @@ int getType(const int op[]){
     if(op[0] == '\0') return Error;
     return NotDefined;
 }
-
-///Кодировка указателей
-enum ptrTypes_{  //сделал специально удобную кодировку(см. ф. getpointer)
-    Ptr_reg_reg_reg,      //000
-    Ptr_reg_reg_const,    //001
-    Ptr_reg_const_reg,    //010
-    Ptr_reg_const_const,  //011
-    Ptr_const_reg_reg,    //100
-    Ptr_const_reg_const,  //101
-    Ptr_const_const_reg,  //110
-    Ptr_const_const_const //111
-};
 
 ///Набор динамических массивов, которые я использую
 struct Defines_{
@@ -371,71 +263,85 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
         type3 = Nothing;
 
     char code = 0;
-    if(type >= Register && type < Register + CountOfRegs){
+    switch(type){
+    case Register: case Register + 1: case Register + 2: case Register + 3:
+    case Register + 4:case Register + 5: case Register + 6: case Register + 7:
         code += 0b000;
         result[1] = (char)(type - Register);
         result[2] = result[3] = result[4] = 0;
-    }
-    else if(type == Label || type == NotDefined){
+        break;
+    case Label:
         code += 0b100;
-        if(type == Label){
-            i = searchForLabel(def, buff);
-            if(i != NONE)
-                myMemCpy(&result[1], stack_r(def.ptrLabelValues, i), REG_SIZE);
-            else ERROROP2(Undefined label,buff);
-        }
-        else{ //type == NotDefined
-            i = searchForVariable(def, buff);
-            if(i != NONE)
-                myMemCpy(&result[1], stack_r(def.ptrVariableValues, i), REG_SIZE);
-            else ERROROP2(Undefined variable,buff);
-        }
+        i = searchForLabel(def, buff);
+        if(i != NONE)
+            myMemCpy(&result[1], stack_r(def.ptrLabelValues, i), REG_SIZE);
+        else ERROROP2(Undefined label,buff);
+        break;
+    case NotDefined:
+        code += 0b100;
+        i = searchForVariable(def, buff);
+        if(i != NONE)
+            myMemCpy(&result[1], stack_r(def.ptrVariableValues, i), REG_SIZE);
+        else ERROROP2(Undefined variable,buff);
+        break;
+    default:
+        ERROROP2(What the fuck 1?, buff);
     }
-    else ERROROP2(What the fuck 1?, buff);
-    //
-    if(type2 >= Register && type2 < Register + CountOfRegs){
-        code += 0b000;
-        result[5] = (char)(type2 - Register);
-        result[6] = result[7] = result[8] = 0;
-    }
-    else if(type2 == Const16 || type2 == Const10 || type2 == Nothing){
-        code +=0b010;
-        void* temp;
-        if(type2 == Const16){
+
+    void* temp;
+    switch(type2){
+        case Register: case Register + 1: case Register + 2: case Register + 3:
+        case Register + 4:case Register + 5: case Register + 6: case Register + 7:
+            code += 0b000;
+            result[5] = (char)(type2 - Register);
+            result[6] = result[7] = result[8] = 0;
+            break;
+        case Const16:
+            code +=0b010;
             temp = getConst16D(&buff2[1]);
             myMemCpy(&result[5], temp, REG_SIZE);
-        }
-        else if(type2 == Const10){
+            break;
+        case Const10:
+            code +=0b010;
             temp = getConst10D(&buff2[1]);
             myMemCpy(&result[5], temp, REG_SIZE);
-        }
-        else
+            break;
+        case Nothing:
+            code +=0b010;
             result[5] = result[6] = result[7] = result[8] = 0;
+            break;
+
+        default:
+            ERROROP2(What the fuck 2?, buff2);
     }
-    else ERROROP2(What the fuck 2?, buff2);
-    //
-    if(type3 >= Register && type3 < Register + CountOfRegs){
-        code += 0b000;
-        result[9] = (char)(type3 - Register);
-        result[10] = result[11] = result[12] = 0;
-    }
-    else if(type3 == Const16 || type3 == Const10 || type3 == Nothing){
-        code += 0b001;
-        void* temp;
-        if(type3 == Const16){
+
+    switch(type3){
+        case Register: case Register + 1: case Register + 2: case Register + 3:
+        case Register + 4:case Register + 5: case Register + 6: case Register + 7:
+            code += 0b000;
+            result[9] = (char)(type3 - Register);
+            result[10] = result[11] = result[12] = 0;
+            break;
+        case Const16:
+            code +=0b001;
             temp = getConst16D(&buff3[1]);
             myMemCpy(&result[9], temp, REG_SIZE);
-        }
-        else if(type3 == Const10){
+            break;
+        case Const10:
+            code +=0b001;
             temp = getConst10D(&buff3[1]);
             myMemCpy(&result[9], temp, REG_SIZE);
-        }
-        else{
+            break;
+        case Nothing:
+            code +=0b001;
             result[9] = 1;
             result[10] = result[11] = result[12] = 0; //те тут по дефолту единица в качестве шага
-        }
+            break;
+
+        default:
+            ERROROP2(What the fuck 3?, buff3);
     }
-    else ERROROP2(What the fuck 3?, buff3);
+
     result[0] = code;
     return result;
 }
@@ -472,12 +378,14 @@ int compileFile(FILE* input, Stack* ptrProgram){
     unsigned char code;    ///< Обычно содержит кодировку оператора/операнда
     u_int32_t value;       ///< Обычно содержит значение метки или переменной (место в памяти)
     int search;          ///< Индекс найденного элемента через функции seach..
-    int i;            ///< Индекс для циклов for
+    int i;          ///< Индекс для циклов for
+    char *temp;     ///<Какой то указатель (обычно для ссылок на строки)
 
     while(getOp(input, op, &lineNum) > 0) {
         type = getType(op);
         switch (type) {
             case MOV_reg_reg: //операнды с переменной длиной 3-21 байт
+
                 if (getOp(input, op, &lineNum) > 0) {
                     type = getType(op);
                 } else
@@ -509,44 +417,58 @@ int compileFile(FILE* input, Stack* ptrProgram){
 
                 push(ptrProgram, &code);
 
-                if (type >= Register && type < Register + CountOfRegs) {
+                switch(type){
+                    case Register: case Register + 1: case Register + 2: case Register + 3:
+                    case Register + 4: case Register + 5: case Register + 6: case Register + 7:
+                        code = (char) (type - Register);
+                        push(ptrProgram, &code);
+                        break;
+                    case Pointer: case NotDefined:                      //FIXME
+                        temp = getPointer(op, def, lineNum);
+                        if (temp == NULL) ERROROP(Error pointer, op);
+                        for (i = 0; i < POINTER_SIZE; i++)
+                            push(ptrProgram, temp + i);
+                        break;
+                    default:
+                        assert(0);
+                }
+
+                switch(type2){
+                case Register: case Register + 1: case Register + 2: case Register + 3:
+                case Register + 4: case Register + 5: case Register + 6: case Register + 7:
                     code = (char) (type - Register);
                     push(ptrProgram, &code);
-                } else if (type == Pointer || type == NotDefined) {
-                    char *temp = getPointer(op, def, lineNum);
-                    if (temp == NULL) ERROROP(Error pointer, op);
-                    for (i = 0; i < POINTER_SIZE; i++)
-                        push(ptrProgram, temp + i);
-                } else
-                    assert(0);
-
-                if (type2 >= Register && type2 < Register + CountOfRegs) {
-                    code = (char) (type2 - Register);
-                    push(ptrProgram, &code);
-                } else if (type2 == Const16) {
-                    char *temp = (char *) getConst16D(&op2[1]);
+                    break;
+                case Const16:
+                    temp = (char *) getConst16D(&op2[1]);
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, temp + i);
-                } else if (type2 == Const10) {
-                    char *temp = (char *) getConst10D(&op2[1]);
+                    break;
+                case Const10:
+                    temp = (char *) getConst10D(&op2[1]);
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, temp + i);
-                } else if (type2 == Pointer) {
-                    char *temp = getPointer(op2, def, lineNum);
+                    break;
+                case Pointer:                                               //FIXME
+                    temp = getPointer(op2, def, lineNum);
                     if (temp == NULL) ERROROP(Error pointer, op2);
                     for (i = 0; i < POINTER_SIZE; i++)
                         push(ptrProgram, temp + i);
-                } else if (type2 == Label) {
+                    break;
+                case Label:
                     search = searchForLabel(def, op2);
                     if (search == NONE) ERROROP(Undefined label, op2);
-                    char *temp = stack_r(def.ptrLabelValues, search);
+                    temp = stack_r(def.ptrLabelValues, search);
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, temp + i);
-                } else
+                    break;
+                default:
                     assert(0);
+                }
                 break;
-            case PUSH_reg:
-            case POP_reg: //операнды с фиксированной длиной, состоящие из 2х байт
+
+            case PUSH_reg: case POP_reg: //операнды с фиксированной длиной, состоящие из 2-х байт
+
                 code = (char) type;
                 push(ptrProgram, &code);
                 if (getOp(input, op, &lineNum) > 0) {
@@ -559,26 +481,29 @@ int compileFile(FILE* input, Stack* ptrProgram){
                 } else
                     ERROROP(there are no arg, op);
                 break;
+
             case ADD: case SUB: case INC: case IMUL: case IDIV: case AND: case OR: //однобайтные операнды
             case XOR: case NOT: case NEG: case SHL: case SHR: case SHRL: case CMP:
             case RET: case END:
+
                 code = (char) type;
                 push(ptrProgram, &code);
                 break;
+
             case JMP_lbl: case JE_lbl: case JZ_lbl: case JG_lbl: //операнды с переменной длиной, весят по 5 байт в случае если переход по метке, 14 байт, если переход по ссылке
             case JGE_lbl: case JL_lbl: case JLE_lbl: case CALL_lbl:
+
                 code = (char) type;
                 if (getOp(input, op, &lineNum) > 0) {
-                    const char *temp;
                     type = getType(op);
                     if (type == Label) {
                         push(ptrProgram, &code);
-                        int seach = searchForLabel(def, op);
-                        if (seach == NONE) ERROROP(Undefined label, op);
-                        temp = stack_r(def.ptrLabelValues, seach);
-                        for (seach = 0; seach < REG_SIZE; seach++)
-                            push(ptrProgram, (void *) (temp + seach));
-                    } else if (type == Pointer) {
+                        search = searchForLabel(def, op);
+                        if (search == NONE) ERROROP(Undefined label, op);
+                        temp = stack_r(def.ptrLabelValues, search);
+                        for (search = 0; search < REG_SIZE; search++)
+                            push(ptrProgram, (void *) (temp + search));
+                    } else if (type == Pointer) {                               //FIXME
                         code = code - JMP_lbl + JMP_ptr;
                         push(ptrProgram, &code);
                         temp = getPointer(op, def, lineNum);
@@ -590,7 +515,9 @@ int compileFile(FILE* input, Stack* ptrProgram){
                 } else
                     ERROR(There are no operand);
                 break;
+
             case DV: //инициализация переменных
+
                 if (getOp(input, op, &lineNum) > 0) {
                     if (getType(op) != NotDefined) ERROROP(This is not name, op);
                     char found = 0;
@@ -606,7 +533,9 @@ int compileFile(FILE* input, Stack* ptrProgram){
                 } else
                     ERROR(there are no arg);
                 break;
+
             case DA: //инициализация массивов
+
                 if (getOp(input, op, &lineNum) > 0) {
                     if (getType(op) != NotDefined) ERROROP(This is not name, op);
                     char found = 0;
@@ -623,28 +552,30 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         name of variable);
 
                 if (getOp(input, op, &lineNum) > 0) {
-                    u_int32_t *temp;
+                    u_int32_t *tempConst;
                     if ((type = getType(op)) == Const10) {
-                        temp = getConst10D(&op[1]);
+                        tempConst = getConst10D(&op[1]);
                     } else if (type == Const16) {
-                        temp = getConst16D(&op[1]);
+                        tempConst = getConst16D(&op[1]);
                     } else
                         ERROROP(This is not count, op);
-                    if (*temp == 0) ERROROP(It cant be zero value, op);
-                    varCounter += (*temp) * sizeof(int32_t);
+                    if (*tempConst == 0) ERROROP(It cant be zero value, op);
+                    varCounter += (*tempConst) * sizeof(int32_t);
                     if (varCounter > 0x00FFFFFF) ERROR(Too many variables);
                 } else
                     ERROR(there are no arg:
                         count of elements);
                 break;
+
             case Label:
+
                 search = searchForLabel(def, op);
                 if (search != NONE) {
                     value = *((int32_t *) stack_r(def.ptrLabelValues, search));
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, (char *) &value + i);
                 } else {
-                    if (getsize(ptrProgram) < 0x00FFFFFF) {
+                    if (getsize(ptrProgram) < 0x00FFFFFF) { //FIXME: write error
                         push(def.ptrLabelNames, op);
                         value = getsize(ptrProgram);
                         push(def.ptrLabelValues, &value);
@@ -652,6 +583,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         ERROR(file is too large);
                 }
                 break;
+
             default:
                 ERROROP(Unknown operator, op);
         }
@@ -660,7 +592,14 @@ int compileFile(FILE* input, Stack* ptrProgram){
     return 0;
 }
 
-    /*
+
+
+
+
+
+
+
+    /* //for QUAD command:
 else if(type == Const16){   //const16
     char* temp = (char*)getConst16D(&op[1]);
     for(i = 0; i < REG_SIZE; i++)
