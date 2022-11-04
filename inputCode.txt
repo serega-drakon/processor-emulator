@@ -1,1 +1,6 @@
 MOV %ax (%ax)
+.label
+
+DA name !10
+DA name !2
+.label

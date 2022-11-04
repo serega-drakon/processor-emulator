@@ -148,17 +148,43 @@ int getType(const int op[]){
 struct Defines_{
     Stack* ptrVariableNames;    ///<имена переменных
     Stack* ptrVariableValues;   ///<величины ссылок на переменные
-    Stack* ptrLabelNames;       ///<имена меток
-    Stack* ptrLabelValues;      ///<величины ссылок меток
+    Stack* ptrLabelDefinedNames;       ///<имена меток
+    Stack* ptrLabelDefinedValues;      ///<величины ссылок меток
+    Stack* ptrLabelUsedNames;
+    Stack* ptrLabelUsedValuesPtr;
 };
+
+///Конструктор
+void definesInit(struct Defines_ *def){
+    def->ptrVariableNames = stackInit(MAXOP * sizeof(int));   ///<имена переменных
+    def->ptrVariableValues = stackInit(REG_SIZE);         ///<величины ссылок на переменные
+    def->ptrLabelDefinedNames = stackInit(MAXOP * sizeof(int));      ///<имена меток
+    def->ptrLabelDefinedValues = stackInit(REG_SIZE);            ///<величины ссылок меток
+    def->ptrLabelUsedNames = stackInit(MAXOP * sizeof(int));
+    def->ptrLabelUsedValuesPtr = stackInit(sizeof(void*));
+}
+
+///Деструктор
+void definesFree(struct Defines_ *def){
+    stackFree(def->ptrVariableNames);
+    stackFree(def->ptrVariableValues);
+    stackFree(def->ptrLabelDefinedNames);
+    stackFree(def->ptrLabelDefinedValues);
+    stackFree(def->ptrLabelUsedNames);
+    stackFree(def->ptrLabelUsedValuesPtr);
+}
 
 ///Смотрит по массиву меток есть ли данная "op" в списке и возвращает ее индекс, иначе возвращает NONE
 int searchForLabel(struct Defines_ def, int op[]){
     int i; char found = 0;
-    for(i = 0; i < getsize(def.ptrLabelNames) && !found; i++)
-        if(compareStrStack(op, def.ptrLabelNames, i)) found = 1;
+    for(i = 0; i < getsize(def.ptrLabelDefinedNames) && !found; i++)
+        if(compareStrStack(op, def.ptrLabelDefinedNames, i)) found = 1;
     if(found) return i - 1;
     else return NONE;
+}
+
+void labelUsed(struct Defines_ def, int op[],u_int32_t where){
+
 }
 
 ///Смотрит по массиву переменных есть ли данная "op" в списке и возвращает ее индекс, иначе возвращает NONE
@@ -191,15 +217,15 @@ u_int32_t* getConst16D(const int op[]){
 ///Возвращает указатель на сформированную ссылку из 13 байт (может лепить ссылки из переменных и меток)
 char* getPointer(const int op[], const struct Defines_ def, const unsigned int lineNum){
     static char result[13]; //1 байт под тип и 12 под ссылку
-    int i = 0, j; int type;
+    int i, j; int type;
     type = getType(op);
     if(type == Label){
         char found = 0;
-        for(i = 0; i < getsize(def.ptrLabelNames) && !found; i++)
-            if(compareStrStack(op, def.ptrLabelNames, i)) found = 1;
+        for(i = 0; i < getsize(def.ptrLabelDefinedNames) && !found; i++)
+            if(compareStrStack(op, def.ptrLabelDefinedNames, i)) found = 1;
         if(found){
             result[0] = Ptr_const_const_const;
-            myMemCpy(&result[1], stack_r(def.ptrLabelValues, i - 1), REG_SIZE);
+            myMemCpy(&result[1], stack_r(def.ptrLabelDefinedValues, i - 1), REG_SIZE);
             for(i = 5; i < 13; i++)
                 result[i] = 0;
             return result;
@@ -274,7 +300,7 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
         code += 0b100;
         i = searchForLabel(def, buff);
         if(i != NONE)
-            myMemCpy(&result[1], stack_r(def.ptrLabelValues, i), REG_SIZE);
+            myMemCpy(&result[1], stack_r(def.ptrLabelDefinedValues, i), REG_SIZE);
         else ERROROP2(Undefined label,buff);
         break;
     case NotDefined:
@@ -344,22 +370,6 @@ char* getPointer(const int op[], const struct Defines_ def, const unsigned int l
 
     result[0] = code;
     return result;
-}
-
-///Конструктор
-void definesInit(struct Defines_ *def){
-    def->ptrVariableNames = stackInit(MAXOP * sizeof(int));   ///<имена переменных
-    def->ptrVariableValues = stackInit(REG_SIZE);         ///<величины ссылок на переменные
-    def->ptrLabelNames = stackInit(MAXOP * sizeof(int));      ///<имена меток
-    def->ptrLabelValues = stackInit(REG_SIZE);            ///<величины ссылок меток
-}
-
-///Деструктор
-void definesFree(struct Defines_ *def){
-    stackFree(def->ptrVariableNames);
-    stackFree(def->ptrVariableValues);
-    stackFree(def->ptrLabelNames);
-    stackFree(def->ptrLabelValues);
 }
 
 ///Основная функция, вызывает все остальные
@@ -449,16 +459,16 @@ int compileFile(FILE* input, Stack* ptrProgram){
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, temp + i);
                     break;
-                case Pointer:                                               //FIXME
+                case Pointer:
                     temp = getPointer(op2, def, lineNum);
                     if (temp == NULL) ERROROP(Error pointer, op2);
                     for (i = 0; i < POINTER_SIZE; i++)
                         push(ptrProgram, temp + i);
                     break;
-                case Label:
+                case Label:                                          //FIXME
                     search = searchForLabel(def, op2);
                     if (search == NONE) ERROROP(Undefined label, op2);
-                    temp = stack_r(def.ptrLabelValues, search);
+                    temp = stack_r(def.ptrLabelDefinedValues, search);
                     for (i = 0; i < REG_SIZE; i++)
                         push(ptrProgram, temp + i);
                     break;
@@ -500,7 +510,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         push(ptrProgram, &code);
                         search = searchForLabel(def, op);
                         if (search == NONE) ERROROP(Undefined label, op);
-                        temp = stack_r(def.ptrLabelValues, search);
+                        temp = stack_r(def.ptrLabelDefinedValues, search);
                         for (search = 0; search < REG_SIZE; search++)
                             push(ptrProgram, (void *) (temp + search));
                     } else if (type == Pointer) {                               //FIXME
@@ -529,7 +539,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         push(def.ptrVariableValues, &value);
                         varCounter += sizeof(int32_t);
                     } else
-                        ERROROP(Variable is still defined, op);
+                        ERROROP(Variable has already been defined, op);
                 } else
                     ERROR(there are no arg);
                 break;
@@ -546,13 +556,13 @@ int compileFile(FILE* input, Stack* ptrProgram){
                         push(def.ptrVariableNames, op);
                         push(def.ptrVariableValues, &value);
                     } else
-                        ERROROP(Variable is still defined, op);
+                        ERROROP(Variable has already been defined, op);
                 } else
-                    ERROR(there are no arg:
-                        name of variable);
+                    ERROR(there are no arg: name of variable);
 
                 if (getOp(input, op, &lineNum) > 0) {
                     u_int32_t *tempConst;
+
                     if ((type = getType(op)) == Const10) {
                         tempConst = getConst10D(&op[1]);
                     } else if (type == Const16) {
@@ -563,25 +573,24 @@ int compileFile(FILE* input, Stack* ptrProgram){
                     varCounter += (*tempConst) * sizeof(int32_t);
                     if (varCounter > 0x00FFFFFF) ERROR(Too many variables);
                 } else
-                    ERROR(there are no arg:
-                        count of elements);
+                    ERROR(there are no arg: count of elements);
                 break;
 
             case Label:
 
                 search = searchForLabel(def, op);
-                if (search != NONE) {
-                    value = *((int32_t *) stack_r(def.ptrLabelValues, search));
-                    for (i = 0; i < REG_SIZE; i++)
-                        push(ptrProgram, (char *) &value + i);
-                } else {
+
+                if(search == NONE){
                     if (getsize(ptrProgram) < 0x00FFFFFF) { //FIXME: write error
-                        push(def.ptrLabelNames, op);
+                        push(def.ptrLabelDefinedNames, op);
                         value = getsize(ptrProgram);
-                        push(def.ptrLabelValues, &value);
+                        push(def.ptrLabelDefinedValues, &value);
                     } else
                         ERROR(file is too large);
                 }
+                else
+                    ERROROP(Label has already been defined, op);
+
                 break;
 
             default:
