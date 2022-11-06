@@ -1,6 +1,9 @@
 #ifndef PROCESSOR_EMULATOR_ENCODINGS_H
 #define PROCESSOR_EMULATOR_ENCODINGS_H
 
+#define REG_SIZE 4          //Размер регистра
+#define POINTER_SIZE 13     //Размер указателя
+
 ///Это не кодировка, а просто перечисление количества соответствущих типов команд
 enum count_{
     CountOfRegs = 8,
@@ -25,7 +28,21 @@ enum encodingOps_{
     DV, DA,
     JMP_lbl, JE_lbl, JZ_lbl, JG_lbl, JGE_lbl, JL_lbl, JLE_lbl, CALL_lbl,
     JMP_ptr, JE_ptr, JZ_ptr, JG_ptr, JGE_ptr, JL_ptr, JLE_ptr, CALL_ptr, //варианты когда нужно перейти по значению, лежащему по данной ссылке
-    RET, END
+    RET, QUAD, END
+};
+
+///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
+///У таких типов как pointer или label слишком сложная структура, чтобы доставать их из одной функции вместе с остальными,
+///под них я написал функции getPointer и searchFor.
+enum others_{
+    NotDefined = -2, //It may be name of variable
+    Error = -1, //it exactly is error
+    Nothing = 0,
+    Register = END + 1, //регистры по задумке не должны кодироваться, записал их для удобства вывода из getType()
+    Const16 = Register + CountOfRegs,
+    Const10,
+    Pointer,
+    Label
 };
 
 ///Кодировка всех регистров
@@ -50,20 +67,6 @@ enum ptrTypes_{  //сделал специально удобную кодиро
     Ptr_const_reg_const,  //101
     Ptr_const_const_reg,  //110
     Ptr_const_const_const //111
-};
-
-///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
-///У таких типов как pointer или label слишком сложная структура, чтобы доставать их из одной функции вместе с остальными,
-///под них я написал функции getPointer и searchFor.
-enum others_{
-    NotDefined = -2, //It may be name of variable
-    Error = -1, //it exactly is error
-    Nothing = 0,
-    Register = END + 1, //регистры по задумке не должны кодироваться, записал их для удобства вывода из getType()
-    Const16 = Register + CountOfRegs,
-    Const10,
-    Pointer,
-    Label
 };
 
 ///Представления команд
@@ -96,6 +99,7 @@ const char *operators_[] = {
         "JLE",
         "CALL",
         "RET",
+        "QUAD",
         "END"
 };
 
