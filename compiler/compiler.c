@@ -75,7 +75,7 @@ int compareStrStack(const int a[], Stack* ptrStack, u_int32_t index){
 
 ///Получает следующий операнд или оператор из файла\n
 ///Возвращает длину найденной строки\n
-int getOp(FILE* input, int op[], unsigned int* ptrLineNum){ //works!
+int getOp(FILE *input, unsigned int *ptrLineNum, int op[]) { //works!
     int c;
     int i = 0;
     char flag = 0; // есть ли незакрытая скобка ()
@@ -542,12 +542,12 @@ int processMov(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
     unsigned char code;
     int errorCheck = 0;
 
-    if (getOp(input, op, lineNum) > 0) {
+    if (getOp(input, lineNum, op) > 0) {
         type1 = getType(op);
     } else
         ERROR2(There are no operand);
 
-    if (getOp(input, op2, lineNum) > 0) {
+    if (getOp(input, lineNum, op2) > 0) {
         type2 = getType(op2);
     } else
         ERROR2(There are no operand);
@@ -571,7 +571,7 @@ int processPushPop(FILE* input, Stack* ptrProgram, unsigned int* lineNum, int ty
     int op[MAXOP];
     unsigned char code = (char) type;
     push(ptrProgram, &code);
-    if (getOp(input, op, lineNum) > 0) {
+    if (getOp(input, lineNum, op) > 0) {
         type = getType(op);
         if (type >= Register && type < Register + CountOfRegs) {
             code = (char) (type - Register); //num of reg
@@ -593,7 +593,7 @@ void processOneByte(Stack* ptrProgram, int type){
 int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNum, int type){
     int op[MAXOP];
     unsigned char code = (char) type;
-    if (getOp(input, op, lineNum) > 0) {
+    if (getOp(input, lineNum, op) > 0) {
         type = getType(op);
         if (type == Label) {
             push(ptrProgram, &code);
@@ -628,7 +628,7 @@ int processVarDef(Defines  def,int op[], const u_int32_t varCounter) {
 int processDV(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCounter){
     int op[MAXOP];
 
-    if (getOp(input, op, lineNum) > 0) {
+    if (getOp(input, lineNum, op) > 0) {
         if(processVarDef(def, op, *varCounter))
             ERROR2(Error DV);
         *varCounter += sizeof(int32_t);
@@ -643,13 +643,13 @@ int processDA(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCou
     int op[MAXOP];
     int type;
 
-    if (getOp(input, op, lineNum) > 0){
+    if (getOp(input, lineNum, op) > 0){
         if (processVarDef(def, op, *varCounter))
             ERROR2(Error DA);
     }else
         ERROR2(there are no arg: name of variable);
 
-    if (getOp(input, op, lineNum) > 0) {
+    if (getOp(input, lineNum, op) > 0) {
         u_int32_t tempConst;
 
         if ((type = getType(op)) == Const10)
@@ -687,7 +687,7 @@ int processLabelDef(Stack *ptrProgram, Defines def, const unsigned int *lineNum,
 int processQuad(FILE* input, Stack* ptrProgram,Defines def, unsigned int *lineNum){
     int op[MAXOP];
     int type;
-    if(getOp(input, op, lineNum) > 0){
+    if(getOp(input, lineNum, op) > 0){
         type = getType(op);
         switch(type){
             case Const16:
@@ -749,7 +749,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
 
     u_int32_t varCounter = 0; ///<содержит кол-во уже занятых битов переменными (= указатель на след свободный бит)
 
-    while(getOp(input, op, &lineNum) > 0) {
+    while(getOp(input, &lineNum, op) > 0) {
         type = getType(op);
         switch (type) {
             case MOV_reg_reg: //операнды с переменной длиной 3-21 байт
