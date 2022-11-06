@@ -33,7 +33,6 @@ enum encodingOps_{
 
 ///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
 ///У таких типов как pointer или label слишком сложная структура, чтобы доставать их из одной функции вместе с остальными,
-///под них я написал функции getPointer и searchFor.
 enum others_{
     NotDefined = -2, //It may be name of variable
     Error = -1, //it exactly is error
