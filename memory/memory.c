@@ -337,7 +337,7 @@ void *push(Stack *ptrStack, const void *ptrValue) {
 
 /// Stack function: Pop
 void *pop(Stack *ptrStack) {
-    if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) {
+    if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) { //ебать костыль соорудил, зато работает!
         --ptrStack->pos;
         //void *buffPtr = malloc(ptrStack->size);
         //myMemCpy(buffPtr, stack_main(ptrStack, READ, ptrStack->pos, NULL), ptrStack->size);
