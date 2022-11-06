@@ -7,7 +7,7 @@
 #define MAXOP 100
 #define NONE (-1)
 
-///Вывод ошибки name с выводом операнда op, возвращает 1
+///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
 #define ERROROP_1(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -15,8 +15,7 @@ for (int index = 0; op[index] != '\0'; index++) \
 printf("\n");                                   \
 return 1; } while(0)
 
-///Вывод ошибки name с выводом операнда op, возвращает NULL \n
-///Использую в функции getPointer
+///Вывод ошибки name с выводом операнда op, возвращает NULL (с выводом строки)
 #define ERROROP2_1(name, op) do {                  \
 printf("line %d: %s \n", *lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -24,17 +23,17 @@ for (int index = 0; op[index] != '\0'; index++) \
 printf("\n");                                   \
 return 1; } while(0)
 
-///Вывод ошибки name без вывода операнда
+///Вывод ошибки name без вывода операнда (с выводом строки)
 #define ERROR(name) do {                \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 return 1; } while(0)
 
-///Вывод ошибки name без вывода операнда
+///Вывод ошибки name без вывода операнда (с выводом строки)
 #define ERROR2(name) do {                \
 printf("line %d: %s \n", *lineNum + 1, #name);   \
 return 1; } while(0)
 
-///Вывод ошибки name без вывода операнда
+///Вывод ошибки name без вывода операнда (без вывода строки)
 #define ERRORNL(name) do {                \
 printf("%s \n", #name);   \
 return 1; } while(0)
@@ -505,7 +504,7 @@ int processType1Mov(Stack* ptrProgram, Defines def, int type1, u_int32_t *lineNu
     return 0;
 }
 
-//Делает обработку по типу второго операнда (подфункция processMov)
+///Делает обработку по типу второго операнда (подфункция processMov)
 int processType2Mov(Stack* ptrProgram, Defines def, int type2, u_int32_t *lineNum, int op2[]){
     unsigned char code;
     switch (type2) {
@@ -583,7 +582,7 @@ int processPushPop(FILE* input, Stack* ptrProgram, unsigned int* lineNum, int ty
     return 0;
 }
 
-///Обработка однобитовых операций
+///Обработка однобайтовых операций
 void processOneByte(Stack* ptrProgram, int type){
     unsigned char code = (char) type;
     push(ptrProgram, &code);
@@ -610,6 +609,7 @@ int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
     return 0;
 }
 
+///Подфункция для processDV и processDA
 int processVarDef(Defines  def,int op[], const u_int32_t varCounter) {
     u_int32_t value;
     u_int32_t search;
@@ -747,7 +747,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
     struct Defines_ def;
     definesInit(&def);
 
-    u_int32_t varCounter = 0; ///<содержит кол-во уже занятых битов переменными (= указатель на след свободный бит)
+    u_int32_t varCounter = 0; ///<содержит кол-во уже занятых байтов переменными (= указатель на след свободный бит)
 
     while(getOp(input, &lineNum, op) > 0) {
         type = getType(op);
