@@ -610,56 +610,53 @@ int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
     return 0;
 }
 
+int processVarDef(Defines  def,int op[], const u_int32_t varCounter) {
+    u_int32_t value;
+    u_int32_t search;
+    if (getType(op) != NotDefined) ERROROPNL_1(This is not name, op);
+    search = searchFor(def.ptrVariableNames, op);
+    if (search == NONE) {
+        value = varCounter | 0xFF000000;
+        push(def.ptrVariableNames, op);
+        push(def.ptrVariableValues, &value);
+        return 0;
+    } else
+        ERROROPNL_1(Variable has already been defined, op);
+}
+
 ///Обработка определения переменных
 int processDV(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCounter){
     int op[MAXOP];
-    u_int32_t value;
-    u_int32_t search;
 
     if (getOp(input, op, lineNum) > 0) {
-        if (getType(op) != NotDefined) ERROROP2_1(This is not name, op);
-        search = searchFor(def.ptrVariableNames, op);
-        if(search == NONE){
-            value = (*varCounter) | 0xFF000000;
-            push(def.ptrVariableNames, op);
-            push(def.ptrVariableValues, &value);
-            (*varCounter) += sizeof(int32_t);
-            return 0;
-        }
-        else
-            ERROROP2_1(Variable has already been defined, op);
+        if(processVarDef(def, op, *varCounter))
+            ERROR2(Error DV);
+        *varCounter += sizeof(int32_t);
     }
     else
         ERROR2(there are no arg);
+    return 0;
 }
 
 ///Обработка определения массивов
-int processDA(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCounter){
+int processDA(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCounter) {
     int op[MAXOP];
     int type;
-    u_int32_t value;
-    u_int32_t search;
 
-    if (getOp(input, op, lineNum) > 0) {
-        if (getType(op) != NotDefined) ERROROP2_1(This is not name, op);
-        search = searchFor(def.ptrVariableNames, op);
-        if (search == NONE) {
-            value = (*varCounter) | 0xFF000000;
-            push(def.ptrVariableNames, op);
-            push(def.ptrVariableValues, &value);
-        } else
-            ERROROP2_1(Variable has already been defined, op);
-    } else
+    if (getOp(input, op, lineNum) > 0){
+        if (processVarDef(def, op, *varCounter))
+            ERROR2(Error DA);
+    }else
         ERROR2(there are no arg: name of variable);
 
     if (getOp(input, op, lineNum) > 0) {
         u_int32_t tempConst;
 
-        if ((type = getType(op)) == Const10) {
+        if ((type = getType(op)) == Const10)
             tempConst = getConst10D(op);
-        } else if (type == Const16) {
+        else if (type == Const16)
             tempConst = getConst16D(op);
-        } else
+        else
             ERROROP2_1(This is not count, op);
 
         if (tempConst == 0) ERROROP2_1(It cant be zero value, op);
