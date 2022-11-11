@@ -68,9 +68,15 @@ void processor_end(Processor *ptrProc){
 }
 
 ///Записывает 4 байта в ptrRes из ptrStack по позиции pos (без проверки)
-void getValue32(int32_t *ptrRes, Stack *ptrStack, u_int32_t pos){
+int32_t getValue32(Stack *ptrStack, u_int32_t pos){
+    int32_t result;
     for(int i = 0; i < 4; i++)
-        *((char*) ptrRes + i) = *(char*) stack_r(ptrStack, pos + i);
+        *((char*) &result + i) = *(char*) stack_r(ptrStack, pos + i);
+    return result;
+}
+
+u_int32_t getAddress(){
+
 }
 
 ///Получает байт с позицией pos из стека с программой (с проверкой)
@@ -149,13 +155,12 @@ void doMov_reg_reg(Processor *ptrProc){
 
 void doMov_reg_const(Processor *ptrProc){
     const char reg1 = *(char*) stack_r(ptrProc->ptrProgram, ptrProc->pos++);
-    int32_t value;
-    getValue32(&value, ptrProc->ptrProgram, ptrProc->pos);
+    int32_t value = getValue32(ptrProc->ptrProgram, ptrProc->pos);
     ptrProc->pos += 4;
     pushToReg(ptrProc, reg1, value);
 }
 
-int doMov_reg_mem(){
+int doMov_reg_mem(Processor *ptrProc){
 
 }
 
