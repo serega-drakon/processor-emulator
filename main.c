@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "compiler/compiler.h"
+#include "processor/processor.h"
 
 int main() {
     FILE* input = fopen("../inputCode.txt", "r");
@@ -10,6 +11,8 @@ int main() {
     printf("||%d:",compileFile(input, ptrProgram)); //debug
     for(int i = 0; i < getsize(ptrProgram); i++)
         printf("|%d ", *((char*)stack_r(ptrProgram,i)));
+
+    processor_main(ptrProgram);
 
     stackFree(ptrProgram);
     stackFree(ptrStack);

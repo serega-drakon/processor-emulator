@@ -7,6 +7,46 @@
 #define MAXOP 100
 #define NONE (-1)
 
+///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
+#define PRINT_ERROROP_1(name, op) do {                  \
+printf("line %d: %s \n", lineNum + 1, #name);   \
+for (int index = 0; op[index] != '\0'; index++) \
+    printf("%c", op[index]);                    \
+printf("\n");                                   \
+return 1; } while(0)
+
+///Вывод ошибки name с выводом операнда op, возвращает NULL (с выводом строки)
+#define PRINT_ERROROP2_1(name, op) do {                  \
+printf("line %d: %s \n", *lineNum + 1, #name);   \
+for (int index = 0; op[index] != '\0'; index++) \
+    printf("%c", op[index]);                    \
+printf("\n");                                   \
+return 1; } while(0)
+
+///Вывод ошибки name без вывода операнда (с выводом строки)
+#define PRINT_ERROR(name) do {                \
+printf("line %d: %s \n", lineNum + 1, #name);   \
+return 1; } while(0)
+
+///Вывод ошибки name без вывода операнда (с выводом строки)
+#define PRINT_ERROR2(name) do {                \
+printf("line %d: %s \n", *lineNum + 1, #name);   \
+return 1; } while(0)
+
+///Вывод ошибки name без вывода операнда (без вывода строки)
+#define PRINT_ERRORNL(name) do {                \
+printf("%s \n", #name);   \
+return 1; } while(0)
+
+///Вывод ошибки name с выводом операнда op, возвращает NULL \n
+///Использую в функции getPointer
+#define PRINT_ERROROPNL_1(name, op) do {                  \
+printf("%s \n", #name);   \
+for (int index = 0; op[index] != '\0'; index++) \
+    printf("%c", op[index]);                    \
+printf("\n");                                   \
+return 1; } while(0)
+
 ///Представления команд
 const char *operators_[] = {
         "MOV",
@@ -53,46 +93,6 @@ const char *registers_[] = { //емае пошло говно по трубам
         "sp",
         "dp"
 };
-
-///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
-#define PRINT_ERROROP_1(name, op) do {                  \
-printf("line %d: %s \n", lineNum + 1, #name);   \
-for (int index = 0; op[index] != '\0'; index++) \
-    printf("%c", op[index]);                    \
-printf("\n");                                   \
-return 1; } while(0)
-
-///Вывод ошибки name с выводом операнда op, возвращает NULL (с выводом строки)
-#define PRINT_ERROROP2_1(name, op) do {                  \
-printf("line %d: %s \n", *lineNum + 1, #name);   \
-for (int index = 0; op[index] != '\0'; index++) \
-    printf("%c", op[index]);                    \
-printf("\n");                                   \
-return 1; } while(0)
-
-///Вывод ошибки name без вывода операнда (с выводом строки)
-#define PRINT_ERROR(name) do {                \
-printf("line %d: %s \n", lineNum + 1, #name);   \
-return 1; } while(0)
-
-///Вывод ошибки name без вывода операнда (с выводом строки)
-#define PRINT_ERROR2(name) do {                \
-printf("line %d: %s \n", *lineNum + 1, #name);   \
-return 1; } while(0)
-
-///Вывод ошибки name без вывода операнда (без вывода строки)
-#define PRINT_ERRORNL(name) do {                \
-printf("%s \n", #name);   \
-return 1; } while(0)
-
-///Вывод ошибки name с выводом операнда op, возвращает NULL \n
-///Использую в функции getPointer
-#define PRINT_ERROROPNL_1(name, op) do {                  \
-printf("%s \n", #name);   \
-for (int index = 0; op[index] != '\0'; index++) \
-    printf("%c", op[index]);                    \
-printf("\n");                                   \
-return 1; } while(0)
 
 ///Сравнивает строки
 int compareStrIntChar(const int a[], const char b[]){

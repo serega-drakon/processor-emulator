@@ -7,7 +7,9 @@
 #define ERROR 1
 #define ERROREND (END + 1)
 
-#define ERROR_EXIT
+#define ERROR_EXIT(message) do { \
+printf()                                 \
+}while(0);
 
 struct Processor_ {
     Stack *ptrProgram;
@@ -57,17 +59,18 @@ void processor_end(Processor *ptrProcessor){
 
 }
 
+///Записывает 4 байта в ptrRes из ptrStack по позиции pos (без проверки)
 void getValue32(int32_t *ptrRes, Stack *ptrStack, u_int32_t pos){
     for(int i = 0; i < 4; i++)
-        *(char*) ptrRes = *(char*) stack_r(ptrStack, pos);
+        *((char*) ptrRes + i) = *(char*) stack_r(ptrStack, pos + i);
 }
 
-///Получает байт с позицией pos из стека с программой
-unsigned char getByte(Stack *ptrProgram, u_int32_t pos){
-    assert(ptrProgram != NULL);
+///Получает байт с позицией pos из стека с программой (с проверкой)
+unsigned char getByte(Stack *ptrStack, u_int32_t pos){
+    assert(ptrStack != NULL);
     unsigned char byte;
-    if(pos < getsize(ptrProgram))
-        byte = *(unsigned char*)stack_r(ptrProgram, pos);
+    if(pos < getsize(ptrStack))
+        byte = *(unsigned char*)stack_r(ptrStack, pos);
     else
         byte = ERROREND;
     return byte;
@@ -140,6 +143,7 @@ void doMov_reg_const(Processor *ptrProc){
     const char reg1 = *(char*) stack_r(ptrProc->ptrProgram, ptrProc->pos++);
     int32_t value;
     getValue32(&value, ptrProc->ptrProgram, ptrProc->pos);
+    ptrProc->pos += 4;
     pushToReg(ptrProc, reg1, value);
 }
 
@@ -291,21 +295,21 @@ int doCall_ptr() {
 }
 
 
-int processor_main(Stack *ptrProgram) {
-    u_int32_t pos = 0;
-
+int processor_main(Stack *ptrProgram){
     Processor proc;
     proc.ptrProgram = ptrProgram;
     if (processor_init(&proc) == ERROR)
         return ERROR;
 
     unsigned command; //код команды весит 1 байт
-    while ((command = getByte(proc.ptrProgram, pos++)) != END && command != ERROREND) {
+    while ((command = getByte(proc.ptrProgram, proc.pos++)) != ERROREND) {
         switch (command) {
             case MOV_reg_reg:
                 doMov_reg_reg(&proc);
+                break;
             case MOV_reg_const:
                 doMov_reg_const(&proc);
+                break;
             case MOV_reg_mem:
             case MOV_mem_reg:
             case MOV_mem_const:
@@ -351,6 +355,6 @@ int processor_main(Stack *ptrProgram) {
                 return 0;
         }
     }
-    return 1;
+    return ERROR;
 }
 
