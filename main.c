@@ -8,11 +8,13 @@ int main() {
     Stack* ptrStack = stackInit(1);
     Stack* ptrVar = stackInit(1);
 
-    printf("||%d:",compileFile(input, ptrProgram)); //debug
+    u_int32_t bytesForVar;
+
+    printf("||%d:", compileFile(input, ptrProgram, &bytesForVar)); //debug
     for(int i = 0; i < getsize(ptrProgram); i++)
         printf("|%d ", *((char*)stack_r(ptrProgram,i)));
 
-    processor_main(ptrProgram);
+    processor_main(ptrProgram, bytesForVar);
 
     stackFree(ptrProgram);
     stackFree(ptrStack);

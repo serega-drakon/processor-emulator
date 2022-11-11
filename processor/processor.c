@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include "processor.h"
+#include <stdlib.h>
 #include "../encoding/encodings.h"
 #include "../memory/memory.h"
 
@@ -8,8 +8,9 @@
 #define ERROREND (END + 1)
 
 #define ERROR_EXIT(message) do { \
-printf()                                 \
-}while(0);
+printf(#message);          \
+return ERROR;                    \
+}while(0)
 
 struct Processor_ {
     Stack *ptrProgram;
@@ -55,8 +56,13 @@ int processor_init(Processor *ptrProc){        //FIXME: new registers
     return 0;
 }
 
-void processor_end(Processor *ptrProcessor){
+void mem_alloc(){
 
+}
+
+void processor_end(Processor *ptrProc){
+    free(ptrProc->ptrStack);
+    free(ptrProc->ptrVariable);
 }
 
 ///Записывает 4 байта в ptrRes из ptrStack по позиции pos (без проверки)
@@ -294,12 +300,13 @@ int doJle_ptr(){
 int doCall_ptr() {
 }
 
-
-int processor_main(Stack *ptrProgram){
+int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
     Processor proc;
     proc.ptrProgram = ptrProgram;
     if (processor_init(&proc) == ERROR)
         return ERROR;
+
+
 
     unsigned command; //код команды весит 1 байт
     while ((command = getByte(proc.ptrProgram, proc.pos++)) != ERROREND) {
@@ -348,13 +355,12 @@ int processor_main(Stack *ptrProgram){
             case JLE_ptr:
             case CALL_ptr:
             default:
-                //errorMessage //FIXME
-                break;
+                ERROR_EXIT(unknown byte);
             case END:
                 processor_end(&proc);
                 return 0;
         }
     }
-    return ERROR;
+    ERROR_EXIT(unexpected end of program);
 }
 

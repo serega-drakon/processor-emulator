@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include "../memory/memory.h"
 
-int compileFile(FILE* input, Stack* ptrProgram);
+int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar);
 
 #endif //PROCESSOR_EMULATOR_COMPILER_H

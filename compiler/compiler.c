@@ -786,7 +786,7 @@ int checkLabelTable(Stack* ptrProgram, Defines def, const unsigned int *lineNum)
 }
 
 ///Основная функция, вызывает все остальные
-int compileFile(FILE* input, Stack* ptrProgram){
+int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar) {
     int op[MAXOP];
     int type;
     unsigned int lineNum = 0;
@@ -795,7 +795,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
     struct Defines_ def;
     definesInit(&def);
 
-    u_int32_t varCounter = 0; ///<содержит кол-во уже занятых байтов переменными (= указатель на след свободный бит)
+    *ptrBytesForVar = 0; ///<содержит кол-во уже занятых байтов переменными (= указатель на след свободный бит)
 
     while(getOp(input, &lineNum, op) > 0) {
         type = getType(op);
@@ -821,11 +821,11 @@ int compileFile(FILE* input, Stack* ptrProgram){
                     PRINT_ERROR(Error Jmp);
                 break;
             case DV: //инициализация переменных
-                if(processDV(input, def, &lineNum, &varCounter))
+                if(processDV(input, def, &lineNum, ptrBytesForVar))
                     PRINT_ERROR(Error DV);
                 break;
             case DA: //инициализация массивов
-                if(processDA(input, def, &lineNum, &varCounter))
+                if(processDA(input, def, &lineNum, ptrBytesForVar))
                     PRINT_ERROR(Error DA);
                 break;
             case Label:
