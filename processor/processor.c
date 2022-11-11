@@ -55,13 +55,15 @@ int processor_init(Processor *ptrProc){        //FIXME: new registers
     ptrProc->of = 0;
     return 0;
 }
-
-void mem_alloc(Stack *ptrVariable, u_int32_t bytesForVar){ //делает так, чтобы стек не писал ошибок и не возвращал
-    u_int32_t buffValue = 0;                               //бессмысленных пойзонов
+///делает так, чтобы стек не писал ошибок и не возвращал
+///бессмысленных пойзонов
+void mem_alloc(Stack *ptrVariable, u_int32_t bytesForVar){
+    u_int32_t buffValue = 0;
     for(; bytesForVar > 0; bytesForVar--)
         push(ptrVariable, &buffValue);
 }
 
+///Деструктор процессора
 void processor_end(Processor *ptrProc){
     free(ptrProc->ptrStack);
     free(ptrProc->ptrVariable);
@@ -75,8 +77,54 @@ int32_t getValue32(Stack *ptrStack, u_int32_t pos){
     return result;
 }
 
-u_int32_t getAddress(){
+u_int32_t getAddress_reg_reg_reg(Processor *ptrProc){
 
+}
+u_int32_t getAddress_reg_reg_const(Processor *ptrProc){
+
+}
+u_int32_t getAddress_reg_const_reg(Processor *ptrProc){
+
+}
+u_int32_t getAddress_reg_const_const(Processor *ptrProc){
+
+}
+u_int32_t getAddress_const_reg_reg(Processor *ptrProc){
+
+}
+u_int32_t getAddress_const_reg_const(Processor *ptrProc){
+
+}
+u_int32_t getAddress_const_const_reg(Processor *ptrProc){
+
+}
+u_int32_t getAddress_const_const_const(Processor *ptrProc){
+
+}
+
+///Получает адрес из сложной адресации
+u_int32_t getAddress(Processor *ptrProc){
+    const char type = *(char*) stack_r(ptrProc->ptrProgram, ptrProc->pos++);
+    switch(type){
+        case Ptr_reg_reg_reg:
+            return getAddress_reg_reg_reg(ptrProc);
+        case Ptr_reg_reg_const:
+            return getAddress_reg_reg_const(ptrProc);
+        case Ptr_reg_const_reg:
+            return getAddress_reg_const_reg(ptrProc);
+        case Ptr_reg_const_const:
+            return getAddress_reg_const_const(ptrProc);
+        case Ptr_const_reg_reg:
+            return getAddress_const_reg_reg(ptrProc);
+        case Ptr_const_reg_const:
+            return getAddress_const_reg_const(ptrProc);
+        case Ptr_const_const_reg:
+            return getAddress_const_const_reg(ptrProc);
+        case Ptr_const_const_const:
+            return getAddress_const_const_const(ptrProc);
+        default:
+            assert(0);
+    }
 }
 
 ///Получает байт с позицией pos из стека с программой (с проверкой)
