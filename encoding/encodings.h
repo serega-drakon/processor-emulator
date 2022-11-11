@@ -7,12 +7,6 @@
 ///Это не кодировка, а просто перечисление количества соответствущих типов команд
 enum count_{
     CountOfRegs = 8,
-    CountOfOperators2arg = 1,
-    CountOfStackOperators = 2,
-    CountOfStackArithmetics = 14,
-    CountOfDefineVars = 2,
-    CountOfProgramControlArg = 8,
-    CountOfProgramControlNoArg = 2
 };
 
 ///Кодировка всех команд
@@ -24,11 +18,16 @@ enum encodingOps_{
     MOV_mem_const,
     PUSH_reg,
     POP_reg,
-    ADD, SUB, INC, IMUL, IDIV, AND, OR, XOR, NOT, NEG, SHL, SHR, SHRL, CMP,
-    DV, DA,
-    JMP_lbl, JE_lbl, JZ_lbl, JG_lbl, JGE_lbl, JL_lbl, JLE_lbl, CALL_lbl,
-    JMP_ptr, JE_ptr, JZ_ptr, JG_ptr, JGE_ptr, JL_ptr, JLE_ptr, CALL_ptr, //варианты когда нужно перейти по значению, лежащему по данной ссылке
-    RET, QUAD, END
+    ADD, SUB, INC, IMUL,
+    IDIV, AND, OR, XOR,
+    NOT, NEG, SHL, SHR,
+    SHRL, CMP,
+    JMP_lbl, JE_lbl, JZ_lbl, JG_lbl,
+    JGE_lbl, JL_lbl, JLE_lbl, CALL_lbl,
+    RET, END, PRINT_reg,
+    JMP_ptr, JE_ptr, JZ_ptr, JG_ptr,
+    JGE_ptr, JL_ptr, JLE_ptr, CALL_ptr, //варианты когда нужно перейти по значению, лежащему по данной ссылке
+
 };
 
 ///Это костыль для getType, чтобы на основе одного вывода можно было бы сделать кодировку всего что может быть \n
@@ -37,7 +36,8 @@ enum others_{
     NotDefined = -2, //It may be name of variable
     Error = -1, //it exactly is error
     Nothing = 0,
-    Register = END + 1, //регистры по задумке не должны кодироваться, записал их для удобства вывода из getType()
+    QUAD = CALL_ptr, DV, DA, //не кодируемые команды (стоило бы переместить в others)
+    Register, //регистры по задумке не должны кодироваться, записал их для удобства вывода из getType()
     Const16 = Register + CountOfRegs,
     Const10,
     Pointer,
@@ -67,52 +67,5 @@ enum ptrTypes_{  //сделал специально удобную кодиро
     Ptr_const_const_reg,  //110
     Ptr_const_const_const //111
 };
-
-///Представления команд
-const char *operators_[] = {
-        "MOV",
-        "PUSH",
-        "POP",
-        "ADD",
-        "SUB",
-        "INC",
-        "IMUL",
-        "IDIV",
-        "AND",
-        "OR",
-        "XOR",
-        "NOT",
-        "NEG",
-        "SHL",
-        "SHR",
-        "SHRL",
-        "CMP",
-        "DV",
-        "DA",
-        "JMP",
-        "JE",
-        "JZ",
-        "JG",
-        "JGE",
-        "JL",
-        "JLE",
-        "CALL",
-        "RET",
-        "QUAD",
-        "END"
-};
-
-///Представления регистров %..
-const char *registers_[] = { //емае емае пошло говно по трубам
-        "ax",
-        "bx",
-        "cx",
-        "dx",
-        "si",
-        "di",
-        "sp",
-        "dp"
-};
-
 
 #endif //PROCESSOR_EMULATOR_ENCODINGS_H

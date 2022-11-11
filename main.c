@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include "compiler/compiler.h"
 
-int getOp(FILE* input, int op[]);
-
 int main() {
     FILE* input = fopen("../inputCode.txt", "r");
     Stack* ptrProgram = stackInit(1);

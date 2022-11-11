@@ -1,6 +1,3 @@
-DV name
-DA var !2
-DV lll
-QUAD name
-QUAD var
-QUAD lll
+MOV %ax !10
+MOV %bx %ax
+END

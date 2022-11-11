@@ -7,8 +7,55 @@
 #define MAXOP 100
 #define NONE (-1)
 
+///Представления команд
+const char *operators_[] = {
+        "MOV",
+        "PUSH",
+        "POP",
+        "ADD",
+        "SUB",
+        "INC",
+        "IMUL",
+        "IDIV",
+        "AND",
+        "OR",
+        "XOR",
+        "NOT",
+        "NEG",
+        "SHL",
+        "SHR",
+        "SHRL",
+        "CMP",
+        "JMP",
+        "JE",
+        "JZ",
+        "JG",
+        "JGE",
+        "JL",
+        "JLE",
+        "CALL",
+        "RET",
+        "END",
+        "PRINT",
+        "QUAD",
+        "DV",
+        "DA",
+};
+
+///Представления регистров %..
+const char *registers_[] = { //емае пошло говно по трубам
+        "ax",
+        "bx",
+        "cx",
+        "dx",
+        "si",
+        "di",
+        "sp",
+        "dp"
+};
+
 ///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
-#define ERROROP_1(name, op) do {                  \
+#define PRINT_ERROROP_1(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
     printf("%c", op[index]);                    \
@@ -16,7 +63,7 @@ printf("\n");                                   \
 return 1; } while(0)
 
 ///Вывод ошибки name с выводом операнда op, возвращает NULL (с выводом строки)
-#define ERROROP2_1(name, op) do {                  \
+#define PRINT_ERROROP2_1(name, op) do {                  \
 printf("line %d: %s \n", *lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
     printf("%c", op[index]);                    \
@@ -24,23 +71,23 @@ printf("\n");                                   \
 return 1; } while(0)
 
 ///Вывод ошибки name без вывода операнда (с выводом строки)
-#define ERROR(name) do {                \
+#define PRINT_ERROR(name) do {                \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 return 1; } while(0)
 
 ///Вывод ошибки name без вывода операнда (с выводом строки)
-#define ERROR2(name) do {                \
+#define PRINT_ERROR2(name) do {                \
 printf("line %d: %s \n", *lineNum + 1, #name);   \
 return 1; } while(0)
 
 ///Вывод ошибки name без вывода операнда (без вывода строки)
-#define ERRORNL(name) do {                \
+#define PRINT_ERRORNL(name) do {                \
 printf("%s \n", #name);   \
 return 1; } while(0)
 
 ///Вывод ошибки name с выводом операнда op, возвращает NULL \n
 ///Использую в функции getPointer
-#define ERROROPNL_1(name, op) do {                  \
+#define PRINT_ERROROPNL_1(name, op) do {                  \
 printf("%s \n", #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
     printf("%c", op[index]);                    \
@@ -149,13 +196,13 @@ int getType(const int op[]){
         return PUSH_reg;
     if(compareStrIntChar(op, operators_[2]))
         return POP_reg;
-    for(i = 0; i < 24; i++){
+    for(i = 0; i < 25; i++){
         if(compareStrIntChar(op, operators_[3 + i]))
             return ADD + i; //возвращает код операнда
     }
     for(i = 0; i < 3; i++)
-        if(compareStrIntChar(op, operators_[27 + i]))
-            return RET + i;
+        if(compareStrIntChar(op, operators_[28 + i]))
+            return QUAD + i; //DV DA
     if(op[0] == '\0') return Nothing;
     return NotDefined;
 }
@@ -271,7 +318,7 @@ int processVarUse(Stack* ptrProgram, Defines def, int op[]){
             push(ptrProgram, tempPtr + i);
     }
     else
-        ERROROPNL_1(Undefined variable, op);
+        PRINT_ERROROPNL_1(Undefined variable, op);
     return 0;
 }
 
@@ -324,7 +371,7 @@ int getOpsPtr(int op[], int buff1[], int buff2[], int buff3[]){
     if(op[i] != ')'){
         for (; op[i] != ';' && op[i] != ')' && op[i] != ' ' && op[i] != '\t'; i++, j++)
             buff3[j] = op[i];
-        if(op[i] == ';') ERROROPNL_1(Excess separator, op);
+        if(op[i] == ';') PRINT_ERROROPNL_1(Excess separator, op);
     }
     buff3[j] = '\0';
     return 0;
@@ -350,7 +397,7 @@ int processType1Ptr(Stack* ptrProgram, Defines def, int type1, char *code, int b
             processVarUse(ptrProgram, def, buff1);
             break;
         default:
-            ERROROPNL_1(What the fuck 1st?, buff1);
+            PRINT_ERROROPNL_1(What the fuck 1st ?, buff1);
     }
     return 0;
 }
@@ -379,7 +426,7 @@ int processType2Ptr(Stack *ptrProgram,int type2, char *code, int buff2[]){
             pushZeros(ptrProgram, 4);
             break;
         default:
-            ERROROPNL_1(What the fuck 2nd?, buff2);
+            PRINT_ERROROPNL_1(What the fuck 2nd ?, buff2);
     }
     return 0;
 }
@@ -410,7 +457,7 @@ int processType3Ptr(Stack* ptrProgram, int type3, char *code, int buff3[]){
             pushZeros(ptrProgram, 3);
             break;
         default:
-            ERROROPNL_1(What the fuck 3rd?, buff3);
+            PRINT_ERROROPNL_1(What the fuck 3rd ?, buff3);
     }
     return 0;
 }
@@ -430,24 +477,24 @@ int processPointer(Stack* ptrProgram, Defines def, const u_int32_t *lineNum, int
     }
     if(type1 == NotDefined){ //переменная
         if(processNotDefPtr(ptrProgram, def, codePos, op))
-            ERROR2(Error ptr);
+            PRINT_ERROR2(Error ptr);
     }
     assert(type1 == Pointer);
 
     int type2, type3;
     int buff1[MAXOP], buff2[MAXOP], buff3[MAXOP];
 
-    if(getOpsPtr(op, buff1, buff2, buff3)) ERROR2(Error ops);
+    if(getOpsPtr(op, buff1, buff2, buff3)) PRINT_ERROR2(Error ops);
 
     type1 = getType(buff1);
     type2 = getType(buff2);
     type3 = getType(buff3);
 
-    if(processType1Ptr(ptrProgram, def, type1, &code, buff1)) ERROR2(Error ptr 1st op);
+    if(processType1Ptr(ptrProgram, def, type1, &code, buff1)) PRINT_ERROR2(Error ptr 1st op);
 
-    if(processType2Ptr(ptrProgram, type2, &code, buff2)) ERROR2(Error ptr 2nd op);
+    if(processType2Ptr(ptrProgram, type2, &code, buff2)) PRINT_ERROR2(Error ptr 2nd op);
 
-    if(processType3Ptr(ptrProgram, type3, &code, buff3)) ERROR2(Error ptr 3nd op);
+    if(processType3Ptr(ptrProgram, type3, &code, buff3)) PRINT_ERROR2(Error ptr 3nd op);
 
     stack_w(ptrProgram, codePos, &code);
 
@@ -496,7 +543,7 @@ int processType1Mov(Stack* ptrProgram, Defines def, int type1, u_int32_t *lineNu
         case Pointer:
         case NotDefined:
             if(processPointer(ptrProgram, def, lineNum, op))
-                ERROROP2_1(Error ptr, op);
+                PRINT_ERROROP2_1(Error ptr, op);
             break;
         default:
             assert(0);
@@ -521,7 +568,7 @@ int processType2Mov(Stack* ptrProgram, Defines def, int type2, u_int32_t *lineNu
             break;
         case Pointer:
             if(processPointer(ptrProgram, def, lineNum, op2))
-                ERROROP2_1(Error ptr, op2);
+                PRINT_ERROROP2_1(Error ptr, op2);
             break;
         case Label:
             processLabelUse(ptrProgram, def, op2);
@@ -544,23 +591,23 @@ int processMov(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
     if (getOp(input, lineNum, op) > 0) {
         type1 = getType(op);
     } else
-        ERROR2(There are no operand);
+        PRINT_ERROR2(There are no operand);
 
     if (getOp(input, lineNum, op2) > 0) {
         type2 = getType(op2);
     } else
-        ERROR2(There are no operand);
+        PRINT_ERROR2(There are no operand);
 
     code = getCodeMov(type1, type2, &errorCheck);
 
-    if(errorCheck == 1) ERROROP2_1(Invalid 1 argument to MOV, op);
-    else if(errorCheck == 2) ERROROP2_1(Invalid 2 argument to MOV, op2);
+    if(errorCheck == 1) PRINT_ERROROP2_1(Invalid 1 argument to MOV, op);
+    else if(errorCheck == 2) PRINT_ERROROP2_1(Invalid 2 argument to MOV, op2);
 
     push(ptrProgram, &code);
 
-    if(processType1Mov(ptrProgram, def, type1, lineNum, op)) ERROR2(Error mov 1st op);
+    if(processType1Mov(ptrProgram, def, type1, lineNum, op)) PRINT_ERROR2(Error mov 1st op);
 
-    if(processType2Mov(ptrProgram, def, type2, lineNum, op2)) ERROR2(Error mov 2nd op);
+    if(processType2Mov(ptrProgram, def, type2, lineNum, op2)) PRINT_ERROR2(Error mov 2nd op);
 
     return 0;
 }
@@ -576,9 +623,9 @@ int processPushPop(FILE* input, Stack* ptrProgram, unsigned int* lineNum, int ty
             code = (char) (type - Register); //num of reg
             push(ptrProgram, &code);
         } else
-            ERROROP2_1(Invalid argument, op);
+            PRINT_ERROROP2_1(Invalid argument, op);
     } else
-        ERROROP2_1(there are no arg, op);
+        PRINT_ERROROP2_1(there are no arg, op);
     return 0;
 }
 
@@ -601,11 +648,11 @@ int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
             code = code - JMP_lbl + JMP_ptr;
             push(ptrProgram, &code);
             if(processPointer(ptrProgram, def, lineNum, op))
-                ERROROP2_1(Error ptr, op);
+                PRINT_ERROROP2_1(Error ptr, op);
         } else
-            ERROROP2_1(This is not a lable or pointer, op);
+            PRINT_ERROROP2_1(This is not a lable or pointer, op);
     } else
-        ERROR2(There are no operand);
+        PRINT_ERROR2(There are no operand);
     return 0;
 }
 
@@ -613,7 +660,7 @@ int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
 int processVarDef(Defines  def,int op[], const u_int32_t varCounter) {
     u_int32_t value;
     u_int32_t search;
-    if (getType(op) != NotDefined) ERROROPNL_1(This is not name, op);
+    if (getType(op) != NotDefined) PRINT_ERROROPNL_1(This is not name, op);
     search = searchFor(def.ptrVariableNames, op);
     if (search == NONE) {
         value = varCounter | 0xFF000000;
@@ -621,7 +668,7 @@ int processVarDef(Defines  def,int op[], const u_int32_t varCounter) {
         push(def.ptrVariableValues, &value);
         return 0;
     } else
-        ERROROPNL_1(Variable has already been defined, op);
+        PRINT_ERROROPNL_1(Variable has already been defined, op);
 }
 
 ///Обработка определения переменных
@@ -630,11 +677,11 @@ int processDV(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCou
 
     if (getOp(input, lineNum, op) > 0) {
         if(processVarDef(def, op, *varCounter))
-            ERROR2(Error DV);
+            PRINT_ERROR2(Error DV);
         *varCounter += sizeof(int32_t);
     }
     else
-        ERROR2(there are no arg);
+        PRINT_ERROR2(there are no arg);
     return 0;
 }
 
@@ -645,9 +692,9 @@ int processDA(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCou
 
     if (getOp(input, lineNum, op) > 0){
         if (processVarDef(def, op, *varCounter))
-            ERROR2(Error DA);
+            PRINT_ERROR2(Error DA);
     }else
-        ERROR2(there are no arg: name of variable);
+        PRINT_ERROR2(there are no arg: name of variable);
 
     if (getOp(input, lineNum, op) > 0) {
         u_int32_t tempConst;
@@ -657,13 +704,13 @@ int processDA(FILE* input, Defines def, unsigned int *lineNum, u_int32_t *varCou
         else if (type == Const16)
             tempConst = getConst16D(op);
         else
-            ERROROP2_1(This is not count, op);
+            PRINT_ERROROP2_1(This is not count, op);
 
-        if (tempConst == 0) ERROROP2_1(It cant be zero value, op);
+        if (tempConst == 0) PRINT_ERROROP2_1(It cant be zero value, op);
         *varCounter += tempConst * sizeof(int32_t);
-        if ((*varCounter) > 0x00FFFFFF) ERROR2(Too many variables);
+        if ((*varCounter) > 0x00FFFFFF) PRINT_ERROR2(Too many variables);
     } else
-        ERROR2(there are no arg: count of elements);
+        PRINT_ERROR2(there are no arg: count of elements);
     return 0;
 }
 
@@ -677,9 +724,9 @@ int processLabelDef(Stack *ptrProgram, Defines def, const unsigned int *lineNum,
             value = getsize(ptrProgram);
             push(def.ptrLabelDefinedValues, &value);
         } else
-            ERROR2(file is too large);
+            PRINT_ERROR2(file is too large);
     } else
-        ERROROP2_1(Label has already been defined, op);
+        PRINT_ERROROP2_1(Label has already been defined, op);
     return 0;
 }
 
@@ -701,15 +748,15 @@ int processQuad(FILE* input, Stack* ptrProgram,Defines def, unsigned int *lineNu
                 break;
             case NotDefined:
                 if(processVarUse(ptrProgram, def, op))
-                    ERROROP2_1(Unknown variable, op);
+                    PRINT_ERROROP2_1(Unknown variable, op);
                 break;
             default:
-                ERROROP2_1(Invalid arg for QUAD, op);
+                PRINT_ERROROP2_1(Invalid arg for QUAD, op);
         }
         return 0;
     }
     else
-        ERROR2(There are no arg for quad);
+        PRINT_ERROR2(There are no arg for quad);
 }
 
 ///Сверка таблиц использованных и объявленных меток
@@ -724,7 +771,7 @@ int checkLabelTable(Stack* ptrProgram, Defines def, const unsigned int *lineNum)
     for(int i = 0; i < size; i++) {
         ptrOp = stack_r(def.ptrLabelUsedNames, i);
         search = searchFor(def.ptrLabelDefinedNames, ptrOp);
-        if(search == NONE) ERROROP2_1(unknown label, ((int*)ptrOp)); //здесь немного кривое сообщение об ошибке
+        if(search == NONE) PRINT_ERROROP2_1(unknown label, ((int*)ptrOp)); //здесь немного кривое сообщение об ошибке
 
         value = *(u_int32_t*)stack_r(def.ptrLabelDefinedValues, search);
 
@@ -743,6 +790,7 @@ int compileFile(FILE* input, Stack* ptrProgram){
     int op[MAXOP];
     int type;
     unsigned int lineNum = 0;
+    char endFlag = 0;
 
     struct Defines_ def;
     definesInit(&def);
@@ -754,47 +802,53 @@ int compileFile(FILE* input, Stack* ptrProgram){
         switch (type) {
             case MOV_reg_reg: //операнды с переменной длиной 3-21 байт
                 if(processMov(input, ptrProgram, def, &lineNum))
-                    ERROR(Error mov);
+                    PRINT_ERROR(Error mov);
                 break;
             case PUSH_reg:
             case POP_reg: //операнды с фиксированной длиной, состоящие из 2-х байт
                 if(processPushPop(input, ptrProgram, &lineNum, type))
-                    ERROR(Error push pop);
+                    PRINT_ERROR(Error push pop);
                 break;
             case ADD: case SUB: case INC: case IMUL: case IDIV: case AND: case OR: //однобайтные операнды
             case XOR: case NOT: case NEG: case SHL: case SHR: case SHRL: case CMP:
-            case RET: case END:
+            case RET:
                 processOneByte(ptrProgram, type);
                 break;
             //операнды с переменной длиной, весят по 5 байт в случае если переход по метке, 14 байт, если переход по ссылке
             case JMP_lbl: case JE_lbl: case JZ_lbl: case JG_lbl:
             case JGE_lbl: case JL_lbl: case JLE_lbl: case CALL_lbl:
                 if(processJmp(input, ptrProgram, def, &lineNum, type))
-                    ERROR(Error Jmp);
+                    PRINT_ERROR(Error Jmp);
                 break;
             case DV: //инициализация переменных
                 if(processDV(input, def, &lineNum, &varCounter))
-                    ERROR(Error DV);
+                    PRINT_ERROR(Error DV);
                 break;
             case DA: //инициализация массивов
                 if(processDA(input, def, &lineNum, &varCounter))
-                    ERROR(Error DA);
+                    PRINT_ERROR(Error DA);
                 break;
             case Label:
                 if(processLabelDef(ptrProgram, def, &lineNum, op))
-                    ERROR(Error label);
+                    PRINT_ERROR(Error label);
                 break;
             case QUAD:
                 if(processQuad(input, ptrProgram, def, &lineNum))
-                    ERROR(Error Quad);
+                    PRINT_ERROR(Error Quad);
+                break;
+            case END:
+                processOneByte(ptrProgram, type);
+                endFlag = 1;
                 break;
             default:
-                ERROROP_1(Unknown operator, op);
+                PRINT_ERROROP_1(Unknown operator, op);
         }
     }
 
     if(checkLabelTable(ptrProgram, def, &lineNum))
-        ERROR(Error label table);
+        PRINT_ERROR(Error label table);
+
+    if(!endFlag) PRINT_ERROR(No END);
 
     definesFree(&def);
     return 0;
