@@ -56,8 +56,10 @@ int processor_init(Processor *ptrProc){        //FIXME: new registers
     return 0;
 }
 
-void mem_alloc(){
-
+void mem_alloc(Stack *ptrVariable, u_int32_t bytesForVar){ //делает так, чтобы стек не писал ошибок и не возвращал
+    u_int32_t buffValue = 0;                               //бессмысленных пойзонов
+    for(; bytesForVar > 0; bytesForVar--)
+        push(ptrVariable, &buffValue);
 }
 
 void processor_end(Processor *ptrProc){
@@ -305,8 +307,7 @@ int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
     proc.ptrProgram = ptrProgram;
     if (processor_init(&proc) == ERROR)
         return ERROR;
-
-
+    mem_alloc(proc.ptrVariable, bytesForVar);
 
     unsigned command; //код команды весит 1 байт
     while ((command = getByte(proc.ptrProgram, proc.pos++)) != ERROREND) {

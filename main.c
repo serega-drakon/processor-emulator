@@ -9,12 +9,14 @@ int main() {
     Stack* ptrVar = stackInit(1);
 
     u_int32_t bytesForVar;
+    int status;
 
-    printf("||%d:", compileFile(input, ptrProgram, &bytesForVar)); //debug
+    printf("||%d:", status = compileFile(input, ptrProgram, &bytesForVar)); //debug
     for(int i = 0; i < getsize(ptrProgram); i++)
         printf("|%d ", *((char*)stack_r(ptrProgram,i)));
 
-    processor_main(ptrProgram, bytesForVar);
+    if(!status)
+        processor_main(ptrProgram, bytesForVar);
 
     stackFree(ptrProgram);
     stackFree(ptrStack);
