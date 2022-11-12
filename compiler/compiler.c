@@ -109,47 +109,51 @@ int compareStrIntChar(const int a[], const char b[]){
 ///Сравнивает обычную строку и строку из стека с началом в index
 int compareStrStack(const int a[], Stack* ptrStack, u_int32_t index){
     int j;
-    int flag = 1;
-    int* ptrStr = (int*)stack_r(ptrStack, index);
-    for(j = 0; flag && a[j] != '\0' && *(ptrStr + j) != '\0'; j++) {
-        if (a[j] != *(ptrStr + j)) flag = 0;
+  /*int flag = 1;
+    for(j = 0; flag && a[j] != '\0' && *stack_r_int32(ptrStack, index, j) != '\0'; j++) {
+        if (a[j] != *stack_r_int32(ptrStack, index, j)) flag = 0;
     }
-    if(flag && a[j] == '\0' && *(ptrStr + j) == '\0')
+    if(flag && a[j] == '\0' && *stack_r_int32(ptrStack, index, j) == '\0')
+        return 1;
+    return 0;*/
+
+    j = 0;
+    while(a[j] != '\0' && *stack_r_int32(ptrStack, index, j) != '\0'
+          && a[j] == *stack_r_int32(ptrStack, index, j)) {
+        j++;
+    }
+    if(a[j] == '\0' && *stack_r_int32(ptrStack, index, j) == '\0')
         return 1;
     return 0;
 }
 
 ///Получает следующий операнд или оператор из файла\n
 ///Возвращает длину найденной строки\n
-int getOp(FILE *input, unsigned int *ptrLineNum, int op[]) { //works!
+int getOp(FILE *input, unsigned int *ptrLineNum, int op[]) {
     int c;
     int i = 0;
-    char flag = 0; // есть ли незакрытая скобка ()
-    static char memory = 0;//помнит строку, которую пока не надо учитывать
-    if(memory > 0) {
-        (*ptrLineNum)++;
-        memory--;
-    }
+    char hasEnclosedBraces = 0; // есть ли незакрытая скобка ()
     while((c = getc(input)) == ' ' || c == '\t' || c == '\n') {
         if (c == '\n') (*ptrLineNum)++;
     }
     if(c != EOF)
         op[i++] = c;
-    if(c == '(') flag = 1;
-    while(((c = getc(input)) != ' ' && c != '\t' && c != '\n' && c != EOF) || flag) {
-        if(c == '(') flag = 1;
-        else if(c == ')') flag = 0;
+    if(c == '(') hasEnclosedBraces = 1;
+    while(((c = getc(input)) != ' ' && c != '\t' && c != '\n' && c != EOF) || hasEnclosedBraces) {
+        if(c == '(') hasEnclosedBraces = 1;
+        else if(c == ')') hasEnclosedBraces = 0;
         op[i] = c;
         i++;
     }
-    if(c == '\n') memory++;
+    if(c == '\n')
+        ungetc(c, input);
     op[i] = '\0';
     return i;
 }
 
 ///Отображает множество строк на множество целых чисел *три крутых смайлика*\n
 ///Ну или это словарь операторов и операндов, если по-человечески
-int getType(const int op[]){
+int getType(const int op[]){        //FIXME переписать
     int i;
     if(op[0] == '$') { //const 16-digit
         if(op[1] == '\0')
@@ -173,7 +177,7 @@ int getType(const int op[]){
         return Error;
     }
     if(op[0] == '('){ //ptr
-        int endFlag = 1;
+        int endFlag = 1;        //FIXME
         int count = 0; //кол-во ';'
         for(i = 1; op[i] != '\0' && endFlag && count < 3; i++){
             if(op[i] == ';')
@@ -244,11 +248,10 @@ void definesFree(struct Defines_ *def){
 
 ///Смотрит по массиву есть ли данная "op" в списке и возвращает ее индекс, иначе возвращает NONE
 int searchFor(Stack *ptrNames, int op[]){
-    int i; char found = 0;
-    for(i = 0; i < getsize(ptrNames) && !found; i++)
-        if(compareStrStack(op, ptrNames, i)) found = 1;
-    if(found) return i - 1;
-    else return NONE;
+    int i;
+    for(i = 0; i < getsize(ptrNames); i++)
+        if(compareStrStack(op, ptrNames, i)) return i;
+    return NONE;
 }
 
 ///Возвращает константу в 10-ной СС
@@ -313,9 +316,11 @@ void processConst10D(Stack* ptrProgram, int op[]){
 int processVarUse(Stack* ptrProgram, Defines def, int op[]){
     int search = searchFor(def.ptrVariableNames, op);
     if(search != NONE){
-        char *tempPtr = stack_r(def.ptrVariableValues, search);
-        for(int i = 0; i < sizeof(int32_t); i++)
-            push(ptrProgram, tempPtr + i);
+        char *ptrByteOfValue;
+        for(u_int32_t i = 0; i < sizeof(int32_t); i++) {
+            ptrByteOfValue = stack_r_char(def.ptrVariableValues, search, i);
+            push(ptrProgram, ptrByteOfValue);
+        }
     }
     else
         PRINT_ERROROPNL_1(Undefined variable, op);
@@ -339,6 +344,10 @@ int processNotDefPtr(Stack* ptrProgram, Defines def, u_int32_t codePos, int op[]
     stack_w(ptrProgram, codePos, &code);
     if(processVarUse(ptrProgram, def, op))
         return 1;
+    pushZeros(ptrProgram, 4);
+    code = 1;
+    push(ptrProgram, &code);
+    pushZeros(ptrProgram, 3);
     return 0;
 }
 
@@ -478,6 +487,7 @@ int processPointer(Stack* ptrProgram, Defines def, const u_int32_t *lineNum, int
     if(type1 == NotDefined){ //переменная
         if(processNotDefPtr(ptrProgram, def, codePos, op))
             PRINT_ERROR2(Error ptr);
+        return 0;
     }
     assert(type1 == Pointer);
 
@@ -644,7 +654,7 @@ int processJmp(FILE* input, Stack* ptrProgram, Defines def, unsigned int* lineNu
         if (type == Label) {
             push(ptrProgram, &code);
             processLabelUse(ptrProgram, def, op);
-        } else if (type == Pointer) {
+        } else if (type == Pointer || type == NotDefined) {
             code = code - JMP_lbl + JMP_ptr;
             push(ptrProgram, &code);
             if(processPointer(ptrProgram, def, lineNum, op))

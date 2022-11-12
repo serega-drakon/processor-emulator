@@ -8,6 +8,8 @@ typedef struct Stack_ Stack;
 void stackErrorPrint(Stack *ptrStack);
 int stackErrorCheck(Stack *ptrStack);
 void *stackInit(u_int32_t size);
+char *stack_r_char(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfChar);
+int32_t *stack_r_int32(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfInt32);
 void *stack_r(Stack *ptrStack, u_int32_t x);
 void *stack_w(Stack *ptrStack, u_int32_t x, const void *ptrValue);
 void *push(Stack *ptrStack, const void *ptrValue);

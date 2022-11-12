@@ -1,4 +1,4 @@
-DA name !10
-MOV %ax !10
-MOV %bx %ax
+
+DV name
+MOV name %ax
 END

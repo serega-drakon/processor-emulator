@@ -13,6 +13,7 @@
 #define POISON_VALUE 255 //1111.1111
 
 #define EXIT_MAIN do{ \
+printf("Stack error");\
 if (error_main(ptrStack, READ, BuffForErrNull) == 0)\
     return ptrStack->buffForErr;                    \
 else                                                \
@@ -315,6 +316,22 @@ void stackFree(Stack *ptrStack){
 void *stack_r(Stack *ptrStack, u_int32_t x) {
     if (!stackErrorCheck(ptrStack))
         return stack_main(ptrStack, READ, x, NULL);
+    else
+        EXIT;
+}
+
+/// Возвращает указатель на xOfChar байт из элемента массива
+char *stack_r_char(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfChar){
+    if(!stackErrorCheck(ptrStack) && xOfChar < ptrStack->size)
+        return (char *) stack_main(ptrStack, READ, xOfElement, NULL) + xOfChar;
+    else
+        EXIT;
+}
+
+/// Возвращает указатель на xOfInt32 int из элемента массива
+int32_t *stack_r_int32(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfInt32){
+    if(!stackErrorCheck(ptrStack) && xOfInt32 * sizeof(int32_t) < ptrStack->size)
+        return (int32_t *) stack_main(ptrStack, READ, xOfElement, NULL) + xOfInt32;
     else
         EXIT;
 }
