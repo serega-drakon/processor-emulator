@@ -41,7 +41,8 @@ struct Stack_ {
     void *data; ///< Pointer to data
     void *buffForErr;///< buffForErr returns if error occurred
     void *buffForRes;///< buffForRes points to result of stack_main() func
-    u_int32_t size; ///< Size of one element of data in bytes
+    void *buffForPop;///< buffer for pop func
+    u_int32_t sizeOfElement; ///< Size of one element of data in bytes
     u_int32_t num; ///< Number of elements of data (malloced memory)
     u_int32_t pos; ///< Next free position of stack (pop/push/getlast)
     unsigned char *meta; ///< "Poison" check of data
@@ -69,16 +70,14 @@ void myMemCpy(const void *toPtr, const void *fromPtr, u_int32_t sizeInBytes){
 }
 
 void saveResToBuff(Stack *ptrStack, u_int32_t x){
-    const u_int32_t shift_in_stack = (x + KAN_NUM) * ptrStack->size;
+    const u_int32_t shift_in_stack = (x + KAN_NUM) * ptrStack->sizeOfElement;
     const void* from_buf = &((char *) ptrStack->data)[shift_in_stack];
-    myMemCpy(ptrStack->buffForRes, from_buf, ptrStack->size);
+    myMemCpy(ptrStack->buffForRes, from_buf, ptrStack->sizeOfElement);
 }
 
-/// Main function of stack array
-void *stack_main(Stack *ptrStack, int flag, u_int32_t x, const void *ptrValue) { //FIXME: ООП
+void *stack_main_write(Stack *ptrStack, u_int32_t x, const void *ptrValue){
     assert(ptrStack != NULL);
-    assert(flag != WRITE || ptrValue != NULL);
-    assert(flag == READ || flag == WRITE);
+    assert(ptrValue != NULL);
     assert(x >= 0);
 
     if(kanareiyka_check(ptrStack))
@@ -95,21 +94,34 @@ void *stack_main(Stack *ptrStack, int flag, u_int32_t x, const void *ptrValue) {
         EXIT_MAIN;
     }
 
-    switch (flag) {
-        case READ:
-            //check here needed
-            if (!meta_main(ptrStack, READ, x))
-                printf("stack_main: using before undefined value X = %d\n", x);
-            saveResToBuff(ptrStack, x);
-            return ptrStack->buffForRes;
-        case WRITE:
-            myMemCpy(&(((char *) ptrStack->data)[(x + KAN_NUM) * ptrStack->size]), ptrValue, ptrStack->size);
-            meta_main(ptrStack, HAS_USED, x);
-            saveResToBuff(ptrStack, x);
-            return ptrStack->buffForRes;
-        default:
-            assert(0);
+    myMemCpy(&(((char *) ptrStack->data)[(x + KAN_NUM) * ptrStack->sizeOfElement]), ptrValue, ptrStack->sizeOfElement);
+    meta_main(ptrStack, HAS_USED, x);
+    saveResToBuff(ptrStack, x);
+    return ptrStack->buffForRes;
+}
+
+void *stack_main_read(Stack *ptrStack, u_int32_t x){
+    assert(ptrStack != NULL);
+    assert(x >= 0);
+
+    if(kanareiyka_check(ptrStack))
+        error_main(ptrStack, WRITE, KanareiykePizda);
+    if(stackErrorCheck(ptrStack)) {
+        stackErrorPrint(ptrStack);
+        EXIT_MAIN;
     }
+    //extend check
+    stack_extend(ptrStack, x);
+    if (stackErrorCheck(ptrStack)) {
+        printf("stack_main: error\n");
+        stackErrorPrint(ptrStack);
+        EXIT_MAIN;
+    }
+    //check here needed
+    if (!meta_main(ptrStack, READ, x))
+        printf("stack_main: using before undefined value X = %d\n", x);
+    saveResToBuff(ptrStack, x);
+    return ptrStack->buffForRes;
 }
 
 /// Extends given Stack_ by STEP const
@@ -117,51 +129,51 @@ void stack_extend(Stack *ptrStack, u_int32_t x) {
     assert(ptrStack != NULL);
     assert(x >= 0);
 
-    void *buffPtr;
+    void *previousPtr;
 
     //Сначала выделяем память под data
     if (x >= ptrStack->num) {
-        buffPtr = ptrStack->data;
+        previousPtr = ptrStack->data;
         x = x * 2; //new number of elements
-        ptrStack->data = malloc((x + 2 * KAN_NUM) * ptrStack->size); //+канарейка слева и справа
+        ptrStack->data = malloc((x + 2 * KAN_NUM) * ptrStack->sizeOfElement); //+канарейка слева и справа
         if (ptrStack->data != NULL) {
             //возвращаем элементы (включил канарейку слева)
             //указатель на новую канарейку справа
-            const void *ptrKanRightNew = &((char*)ptrStack->data)[(KAN_NUM + x) * ptrStack->size];
+            const void *ptrKanRightNew = &((char*)ptrStack->data)[(KAN_NUM + x) * ptrStack->sizeOfElement];
             //указатель на старую канарейку справа
-            const void *ptrKanRightOld = &((char*)buffPtr)[(KAN_NUM + ptrStack->num) * ptrStack->size];
+            const void *ptrKanRightOld = &((char*)previousPtr)[(KAN_NUM + ptrStack->num) * ptrStack->sizeOfElement];
 
-            myMemCpy(ptrStack->data, buffPtr, (KAN_NUM + ptrStack->num) * ptrStack->size);
-            myMemCpy(ptrKanRightNew,ptrKanRightOld, KAN_NUM * ptrStack->size);
+            myMemCpy(ptrStack->data, previousPtr, (KAN_NUM + ptrStack->num) * ptrStack->sizeOfElement);
+            myMemCpy(ptrKanRightNew,ptrKanRightOld, KAN_NUM * ptrStack->sizeOfElement);
 
             if(!error_main(ptrStack, READ, BuffForErrNull))
                 //заполняю пустоты пойзонами
-                for(int i = 0; i < (x - ptrStack->num) * ptrStack->size ; i++){
-                    ((unsigned char*)ptrStack->data)[(KAN_NUM + ptrStack->num) * ptrStack->size + i] = POISON_VALUE;
+                for(int i = 0; i < (x - ptrStack->num) * ptrStack->sizeOfElement ; i++){
+                    ((unsigned char*)ptrStack->data)[(KAN_NUM + ptrStack->num) * ptrStack->sizeOfElement + i] = POISON_VALUE;
                 }
             ptrStack->num = x;
-            free(buffPtr);
+            free(previousPtr);
         } else {
             error_main(ptrStack, WRITE, DataArrayNull);
-            ptrStack->data = buffPtr;
+            ptrStack->data = previousPtr;
             return;
         }
     }
     //Потом выделяем память для meta
     if (x > ptrStack->metaNum * 8) {
-        buffPtr = ptrStack->meta;
+        previousPtr = ptrStack->meta;
         int y;
         for(y = ptrStack->metaNum; y * 8 < x; y *= 2)
             ;
         ptrStack->meta = calloc(y, sizeof(char));
         if (ptrStack->meta != NULL) {
             //возвращаем элементы
-            myMemCpy(ptrStack->meta, buffPtr, ptrStack->metaNum);
+            myMemCpy(ptrStack->meta, previousPtr, ptrStack->metaNum);
             ptrStack->metaNum = y;
-            free(buffPtr);
+            free(previousPtr);
         } else {
             error_main(ptrStack, WRITE, MetaNull);
-            ptrStack->meta = buffPtr;
+            ptrStack->meta = previousPtr;
             return;
         }
     }
@@ -212,8 +224,8 @@ int error_main(Stack *ptrStack, int flag, int numOfError) {
 ///проверяет канарейки массива и возвращает 1 если они повреждены, 0 если нет.
 int kanareiyka_check(Stack *ptrStack){
     int check = 0;
-    const u_int32_t shift = (KAN_NUM + ptrStack->num) * ptrStack->size;
-    for(int i = 0; i < KAN_NUM * ptrStack->size; i++)
+    const u_int32_t shift = (KAN_NUM + ptrStack->num) * ptrStack->sizeOfElement;
+    for(int i = 0; i < KAN_NUM * ptrStack->sizeOfElement; i++)
         if(((unsigned char*)ptrStack->data)[i] != KAN_VALUE
            || ((unsigned char*)ptrStack->data)[shift + i] != KAN_VALUE)
             check = 1;
@@ -223,11 +235,11 @@ int kanareiyka_check(Stack *ptrStack){
 ///сбрасывает текущую позицию массива до пойзона.
 void stack_reset_pos(Stack *ptrStack, u_int32_t x){
     u_int32_t i;
-    for(i = 0; i < ptrStack->size; i++)
+    for(i = 0; i < ptrStack->sizeOfElement; i++)
         ((unsigned char*)ptrStack->buffForErr)[i] = POISON_VALUE;
-    stack_main(ptrStack, WRITE, x, ptrStack->buffForErr);
+    stack_main_write(ptrStack, x, ptrStack->buffForErr);
     meta_main(ptrStack, RESET, ptrStack->pos);
-    for(i = 0; i < ptrStack->size; i++)
+    for(i = 0; i < ptrStack->sizeOfElement; i++)
         ((char*)ptrStack->buffForErr)[i] = 0;
 }
 
@@ -265,30 +277,33 @@ void *stackInit(u_int32_t size) {
     Stack *ptrStack;
     ptrStack = malloc(sizeof(Stack));
     if (ptrStack != NULL) {
-        ptrStack->size = size;
+        ptrStack->sizeOfElement = size;
         ptrStack->pos = 0;
         ptrStack->metaNum = 0;
         ptrStack->error = 0;
 
-        ptrStack->buffForRes = malloc(ptrStack->size);
+        ptrStack->buffForRes = malloc(ptrStack->sizeOfElement);
         if (ptrStack->buffForRes == NULL)
             error_main(ptrStack, WRITE, BuffForResNull);
-        ptrStack->buffForErr = calloc(ptrStack->size, sizeof(char));
+        ptrStack->buffForErr = calloc(1, ptrStack->sizeOfElement);
         if (ptrStack->buffForErr == NULL)
             error_main(ptrStack, WRITE, BuffForErrNull);
+        ptrStack->buffForPop = malloc(ptrStack->sizeOfElement);
+        if (ptrStack->buffForPop == NULL)
+            error_main(ptrStack, WRITE, BuffForErrNull);
 
-        ptrStack->data = malloc((2 * KAN_NUM + 1) * ptrStack->size);
+        ptrStack->data = malloc((2 * KAN_NUM + 1) * ptrStack->sizeOfElement);
         if(ptrStack->data != NULL) {    //заполняем канарейки
             ptrStack->num = 1;
             int i;
-            const u_int32_t shift = (KAN_NUM + ptrStack->num) * ptrStack->size;
+            const u_int32_t shift = (KAN_NUM + ptrStack->num) * ptrStack->sizeOfElement;
 
-            for(i = 0; i < KAN_NUM * ptrStack->size; i++){
+            for(i = 0; i < KAN_NUM * ptrStack->sizeOfElement; i++){
                 ((unsigned char*)ptrStack->data)[i] = KAN_VALUE;
                 ((unsigned char*)ptrStack->data)[shift + i] = KAN_VALUE;
             }
-            for(i = 0; i < ptrStack->size; i++)
-                ((unsigned char*)ptrStack->data)[KAN_NUM * ptrStack->size + i]= POISON_VALUE;
+            for(i = 0; i < ptrStack->sizeOfElement; i++)
+                ((unsigned char*)ptrStack->data)[KAN_NUM * ptrStack->sizeOfElement + i]= POISON_VALUE;
             ptrStack->meta = calloc(1, sizeof(char));
             ptrStack->metaNum = 1;
             if(ptrStack->meta == NULL)
@@ -307,6 +322,7 @@ void stackFree(Stack *ptrStack){
         free(ptrStack->data);
         free(ptrStack->buffForErr);
         free(ptrStack->buffForRes);
+        free(ptrStack->buffForPop);
         free(ptrStack->meta);
     }
     free(ptrStack);
@@ -315,23 +331,23 @@ void stackFree(Stack *ptrStack){
 /// Array READ function
 void *stack_r(Stack *ptrStack, u_int32_t x) {
     if (!stackErrorCheck(ptrStack))
-        return stack_main(ptrStack, READ, x, NULL);
+        return stack_main_read(ptrStack, x);
     else
         EXIT;
 }
 
 /// Возвращает указатель на xOfChar байт из элемента массива
 char *stack_r_char(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfChar){
-    if(!stackErrorCheck(ptrStack) && xOfChar < ptrStack->size)
-        return (char *) stack_main(ptrStack, READ, xOfElement, NULL) + xOfChar;
+    if(!stackErrorCheck(ptrStack) && xOfChar < ptrStack->sizeOfElement)
+        return (char *) stack_main_read(ptrStack, xOfElement) + xOfChar;
     else
         EXIT;
 }
 
 /// Возвращает указатель на xOfInt32 int из элемента массива
 int32_t *stack_r_int32(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfInt32){
-    if(!stackErrorCheck(ptrStack) && xOfInt32 * sizeof(int32_t) < ptrStack->size)
-        return (int32_t *) stack_main(ptrStack, READ, xOfElement, NULL) + xOfInt32;
+    if(!stackErrorCheck(ptrStack) && xOfInt32 * sizeof(int32_t) < ptrStack->sizeOfElement)
+        return (int32_t *) stack_main_read(ptrStack, xOfElement) + xOfInt32;
     else
         EXIT;
 }
@@ -339,7 +355,7 @@ int32_t *stack_r_int32(Stack *ptrStack, u_int32_t xOfElement, u_int32_t xOfInt32
 /// Array WRITE function
 void *stack_w(Stack *ptrStack, u_int32_t x, const void *ptrValue) {
     if (!stackErrorCheck(ptrStack) && ptrValue != NULL)
-        return stack_main(ptrStack, WRITE, x, ptrValue);
+        return stack_main_write(ptrStack, x, ptrValue);
     else
         EXIT;
 }
@@ -347,7 +363,7 @@ void *stack_w(Stack *ptrStack, u_int32_t x, const void *ptrValue) {
 /// Stack function: Push
 void *push(Stack *ptrStack, const void *ptrValue) {
     if (!stackErrorCheck(ptrStack) && ptrValue != NULL)
-        return stack_main(ptrStack, WRITE, ptrStack->pos++, ptrValue);
+        return stack_main_write(ptrStack, ptrStack->pos++, ptrValue);
     else
         EXIT;
 }
@@ -356,10 +372,9 @@ void *push(Stack *ptrStack, const void *ptrValue) {
 void *pop(Stack *ptrStack) {
     if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) { //ебать костыль соорудил, зато работает!
         --ptrStack->pos;
-        //void *buffPtr = malloc(ptrAStack->size);
-        //myMemCpy(buffPtr, stack_main(ptrAStack, READ, ptrAStack->pos, NULL), ptrAStack->size);
-        //stack_reset_pos(ptrAStack, ptrAStack->pos);
-        return stack_main(ptrStack, READ, ptrStack->pos, NULL);         //FIXME!!! утечка памяти
+        myMemCpy(ptrStack->buffForPop, stack_main_read(ptrStack, ptrStack->pos), ptrStack->sizeOfElement);
+        stack_reset_pos(ptrStack, ptrStack->pos);
+        return ptrStack->buffForPop;
     }
     else
         EXIT;
@@ -368,7 +383,7 @@ void *pop(Stack *ptrStack) {
 /// Stack function: GetLast
 void *getLast(Stack *ptrStack) {
     if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0)
-        return stack_main(ptrStack, READ, ptrStack->pos - 1, NULL);
+        return stack_main_read(ptrStack, ptrStack->pos - 1);
     else
         EXIT;
 }

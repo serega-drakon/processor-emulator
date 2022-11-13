@@ -742,4 +742,3 @@ int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
     }
     ERROR_EXIT("unexpected end of program");
 }
-

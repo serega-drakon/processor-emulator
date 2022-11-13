@@ -7,7 +7,7 @@
 #define MAXOP 100
 #define NONE (-1)
 
-///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки) //FIXME:переделать на ""
+///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
 #define PRINT_ERROROP_1(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -33,10 +33,6 @@ return 1; } while(0)
 printf("line %d: %s \n", *lineNum + 1, #name);   \
 return 1; } while(0)
 
-///Вывод ошибки name без вывода операнда (без вывода строки)
-#define PRINT_ERRORNL(name) do {                \
-printf("%s \n", #name);   \
-return 1; } while(0)
 
 ///Вывод ошибки name с выводом операнда op, возвращает NULL \n
 ///Использую в функции getPointer
@@ -117,6 +113,7 @@ enum strOps_{
     strQUAD,
     strDV,
     strDA,
+    MAXstrOP
 };
 
 ///Представления регистров %..
@@ -131,7 +128,8 @@ const char *registers_[] = { //емае пошло говно по трубам
         "dp"
 };
 
-///Сравнивает строки
+///Сравнивает строки    \n
+///Возвращет 1 если совпали, иначе - 0
 int compareStrIntChar(const int a[], const char b[]){
     int j;
     int flag = 1;
@@ -226,14 +224,86 @@ int checkPtr(const int op[]){
         return Error;
 }
 
+///Сопоставляет список из строк кодировке
 int checkOthers(const int op[]){
-
+    int type;
+    for(type = 0; type < MAXstrOP && !compareStrIntChar(op, operators_[type]); type++)
+        ;
+    switch (type) {
+        case strMOV:
+            return MOV_reg_reg;
+        case strPUSH:
+            return PUSH_reg;
+        case strPOP:
+            return POP_reg;
+        case strADD:
+            return ADD;
+        case strSUB:
+            return SUB;
+        case strINC:
+            return INC;
+        case strIMUL:
+            return IMUL;
+        case strIDIV:
+            return IDIV;
+        case strAND:
+            return AND;
+        case strOR:
+            return OR;
+        case strXOR:
+            return XOR;
+        case strNOT:
+            return NOT;
+        case strNEG:
+            return NEG;
+        case strSHL:
+            return SHL;
+        case strSHR:
+            return SHR;
+        case strSHRL:
+            return SHRL;
+        case strCMP:
+            return CMP;
+        case strJMP:
+            return JMP_lbl;
+        case strJE:
+            return JE_lbl;
+        case strJNE:
+            return JNE_lbl;
+        case strJZ:
+            return JZ_lbl;
+        case strJG:
+            return JG_lbl;
+        case strJGE:
+            return JGE_lbl;
+        case strJL:
+            return JL_lbl;
+        case strJLE:
+            return JLE_lbl;
+        case strCALL:
+            return CALL_lbl;
+        case strRET:
+            return RET;
+        case strEND:
+            return END;
+        case strPRINT:
+            return PRINT_reg;
+        case strQUAD:
+            return QUAD;
+        case strDV:
+            return DV;
+        case strDA:
+            return DA;
+        case MAXstrOP:
+            return NotDefined;
+        default:
+            assert(0);
+    }
 }
 
 ///Отображает множество строк на множество целых чисел *три крутых смайлика*\n
 ///Ну или это словарь операторов и операндов, если по-человечески
-int getType(const int op[]){        //FIXME переписать
-    int i;
+int getType(const int op[]){
     if(op[0] == '$') //const 16-digit
         return checkConst16(op);
     if(op[0] == '!') //const 10-digit
@@ -244,23 +314,11 @@ int getType(const int op[]){        //FIXME переписать
         return checkPtr(op);
     if(op[0] == '.')
         return Label;
-
-    if(compareStrIntChar(op, operators_[0]))
-        return MOV_reg_reg;
-    if(compareStrIntChar(op, operators_[1]))
-        return PUSH_reg;
-    if(compareStrIntChar(op, operators_[2]))
-        return POP_reg;
-    for(i = 0; i < 26; i++){
-        if(compareStrIntChar(op, operators_[3 + i]))
-            return ADD + i; //возвращает код операнда
-    }
-    for(i = 0; i < 3; i++)
-        if(compareStrIntChar(op, operators_[29 + i]))
-            return QUAD + i; //DV DA
-
-    if(op[0] == '\0') return Nothing;
-    return NotDefined;
+    int buffType = checkOthers(op);
+    if(op[0] != '\0')
+        return buffType;
+    else
+        return Nothing;
 }
 
 ///Набор динамических массивов, которые я использую
