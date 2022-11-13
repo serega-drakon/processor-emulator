@@ -14,10 +14,8 @@
 7. SP - stack pointer
 8. DP - data pointer
 9. EFLAGS
-   1. CF - carry flag
-   2. ZF - zero flag
-   3. SF – sign flag
-   4. OF – overflow flag
+   1. ZF - zero flag
+   2. SF – sign flag
 
 ## Семантика моего ассемблера:
 ##### Условно договорюсь большими буквами обозначать операторы, маленькими - операнды и названия
@@ -34,7 +32,7 @@ For an example:
 
 ##### Переменные:
 1. **DV <name>**
-2. **DA <count> <name>**
+2. **DA <name> <count>**
 
 ### Data Movement Instructions:
 
@@ -44,39 +42,40 @@ For an example:
 ###### а сюда описание (но пока думаю понятно что это делает)
 3. #### POP \<reg>
 
-### Arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
+### Stack arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
+
+Операции берут операнды из стека для арифметики и результат возвращают обратно в стек. 
+Его можно будет достать командой POP.
 
 1. **ADD**  – op1 = op1 + op2.
 2. **SUB** – op1 = op1 - op2.
 3. **INC** – op++, op--.
 4. **IMUL** – op1 *= op2, op0 = op1 * op2.
 5. **IDIV** – op1 /= op2, op0 = op1 / op2.
-6. **AND, OR, XOR** – op1 = op1 &|^ op2. //bitwize operator
+6. **AND, OR, XOR** – op1 = op1 &|^ op2. //bitwise operator
 7. **NOT** – op = ~op.
 8. **NEG** – op = -op.
-9. **SHL, SHR, SHRI** – op1 << op2, (unsgined) op1 >> op2, (signed) op1 >> op2.
-10. **CMP** - как вычисление a - b пез потери знака
-    1. CF = 1, если перенос из старего бита или заем в него
-    2. ZF = 1, если a == b
-    3. SF = 1, если (a - b) < 0
-    4. OF = 1, если происходит переполнение в дополнительном коде
+9. **SHL, SHR, SHRI** – op1 << op2, (unsigned) op1 >> op2, (signed) op1 >> op2.
+10. **CMP** - как вычисление a - b без возвращения значения
+    1. ZF = 1, если a == b
+    2. SF = 1, если (a - b) < 0
 
 ### Control Flow instructions:
 
 Labels encode by: `.<name>`
 
 #### J* – условный переход
-* JMP \<label> (jump)
-* JE_lbl \<label> (jump when equal)
-* JNE \<label> (jump when not equal)
-* JZ_lbl \<label> (jump when last result was zero)
-* JG_lbl \<label> (jump when greater than)
-* JGE_lbl \<label> (jump when greater than or equal to)
-* JL_lbl \<label> (jump when less than)
-* JLE \<label> (jump when less than or equal to)
+* JMP \<label> (<pointer>) (jump)
+* JE \<label> (<pointer>) (jump when equal)
+* JNE \<label> (<pointer>) (jump when not equal)
+* JZ \<label> (<pointer>) (jump when last result was zero)
+* JG \<label> (<pointer>) (jump when greater than)
+* JGE \<label> (<pointer>) (jump when greater than or equal to)
+* JL \<label> (<pointer>) (jump when less than)
+* JLE \<label> (<pointer>) (jump when less than or equal to)
 
 #### CALL_lbl, RET — Subroutine call and return (жесть этож имба)
-CALL_lbl <label> – безусловный переход с сохранением текущего положения в стеке\
+CALL <label> – безусловный переход с сохранением текущего положения в стеке\
 RET – возврат по вершине стека
 
 #### End of execution:
