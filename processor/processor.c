@@ -5,10 +5,10 @@
 #include "../memory/memory.h"
 
 #define ERROR 1
-#define ERROREND 0xFF
+#define ERROREND (-1)
 
 #define ERROR_EXIT(message) do { \
-printf(#message);          \
+printf(message);          \
 return ERROR;                    \
 }while(0)
 
@@ -29,16 +29,14 @@ struct Processor_ {
     int32_t sp;
     int32_t dp;
     u_int32_t pos; ///< текущая позиция в программе
-    char cf;    ///<carry flag//FIXME:?
     char zf;    ///<zero flag
     char sf;    ///<sign flag
-    char of;    ///<overflow flag//FIXME:?
 };
 
 typedef struct Processor_ Processor;
 
 ///Конструктор процессора
-int processor_init(Processor *ptrProc){        //FIXME: new registers
+int processor_init(Processor *ptrProc){
     assert(ptrProc != NULL);
     ptrProc->ptrAStack = stackInit(sizeof(int32_t));
     if(ptrProc->ptrAStack == NULL) return ERROR;
@@ -55,10 +53,8 @@ int processor_init(Processor *ptrProc){        //FIXME: new registers
     ptrProc->sp = 0;
     ptrProc->dp = 0;
     ptrProc->pos = 0;
-    ptrProc->cf = 0;
     ptrProc->zf = 0;
     ptrProc->sf = 0;
-    ptrProc->of = 0;
     return 0;
 }
 ///делает так, чтобы стек не писал ошибок и не возвращал
@@ -76,7 +72,7 @@ void processor_end(Processor *ptrProc){
 }
 
 ///Получает байт с позицией pos из стека с программой (с проверкой)
-unsigned char getByte(Stack *ptrStack, u_int32_t pos){      //FIXME int
+int getByte(Stack *ptrStack, u_int32_t pos){
     assert(ptrStack != NULL);
     unsigned char byte;
     if(pos < getsize(ptrStack))
@@ -158,7 +154,7 @@ unsigned char readReg(Processor *ptrProc){
 
 ///Читает код регистра из потока ввода ptrProgram, обновляет позицию ptrPos и возвращает значение регистра
 u_int32_t readRegValue(Processor *ptrProc){
-    unsigned char codeOfReg = getByte(ptrProc->ptrProgram, ptrProc->pos++);
+    unsigned char codeOfReg = (unsigned char) getByte(ptrProc->ptrProgram, ptrProc->pos++);
     u_int32_t value = getFromReg(ptrProc, codeOfReg);
     return value;
 }
@@ -170,7 +166,7 @@ u_int32_t readConst32(Processor *ptrProc){
     return value;
 }
 
-u_int32_t readAddress_reg_reg_reg(Processor *ptrProc){   //FIXME test
+u_int32_t readAddress_reg_reg_reg(Processor *ptrProc){
     const u_int32_t firstArg = readRegValue(ptrProc);
     const u_int32_t secondArg = readRegValue(ptrProc);
     const u_int32_t thirdArg = readRegValue(ptrProc);
@@ -227,7 +223,7 @@ u_int32_t readAddress_const_const_const(Processor *ptrProc){
 }
 
 ///Получает адрес из сложной адресации
-u_int32_t readAddress(Processor *ptrProc){       //FIXME: TEST
+u_int32_t readAddress(Processor *ptrProc){
     const char type = *(char*) stack_r(ptrProc->ptrProgram, ptrProc->pos++);
     switch(type){
         case Ptr_reg_reg_reg:
@@ -285,7 +281,7 @@ int writeToMem32(Processor *ptrProc, u_int32_t address, u_int32_t value){
     }
     else if(address < PROGRAM_MEM_MAX){ //Program
         if(address < getsize(ptrProc->ptrProgram))
-            return 0; //FIXME: сделать записть в программу)))))))
+            return 0; //мб сделать запись в программу?..
         else
             printf("readFromMem32: error reading from not allocated memory (program)");
     }
@@ -599,9 +595,9 @@ void doJle_ptr(Processor *ptrProc){
 }
 
 void doCall_ptr(Processor *ptrProc){
-    const u_int32_t nextPos = ptrProc->pos + POINTER_SIZE;
-    push(ptrProc->ptrPStack, &nextPos);
-    doJmp_ptr(ptrProc);
+    const u_int32_t nextPosFromPointer = readAddress(ptrProc);
+    push(ptrProc->ptrPStack, &ptrProc->pos);
+    ptrProc->pos = nextPosFromPointer;
 }
 
 int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
@@ -611,9 +607,9 @@ int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
         return ERROR;
     mem_alloc(proc.ptrVariable, bytesForVar);
 
-    unsigned command; //код команды весит 1 байт
+    int command; //код команды весит 1 байт
     while ((command = getByte(proc.ptrProgram, proc.pos++)) != ERROREND) {
-        switch (command) {      //FIXME: int ret from funcs
+        switch (command) {
             case MOV_reg_reg:
                 doMov_reg_reg(&proc);
                 break;
@@ -741,9 +737,9 @@ int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
                 processor_end(&proc);
                 return 0;
             default:
-                ERROR_EXIT(unknown byte);
+                ERROR_EXIT("unknown byte");
         }
     }
-    ERROR_EXIT(unexpected end of program);
+    ERROR_EXIT("unexpected end of program");
 }
 

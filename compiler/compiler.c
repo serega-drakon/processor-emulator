@@ -83,6 +83,42 @@ const char *operators_[] = {
         "DA",
 };
 
+///Коды соответствующих операторов в operators_[]
+enum strOps_{
+    strMOV,
+    strPUSH,
+    strPOP,
+    strADD,
+    strSUB,
+    strINC,
+    strIMUL,
+    strIDIV,
+    strAND,
+    strOR,
+    strXOR,
+    strNOT,
+    strNEG,
+    strSHL,
+    strSHR,
+    strSHRL,
+    strCMP,
+    strJMP,
+    strJE,
+    strJNE,
+    strJZ,
+    strJG,
+    strJGE,
+    strJL,
+    strJLE,
+    strCALL,
+    strRET,
+    strEND,
+    strPRINT,
+    strQUAD,
+    strDV,
+    strDA,
+};
+
 ///Представления регистров %..
 const char *registers_[] = { //емае пошло говно по трубам
         "ax",
@@ -110,14 +146,6 @@ int compareStrIntChar(const int a[], const char b[]){
 ///Сравнивает обычную строку и строку из стека с началом в index
 int compareStrStack(const int a[], Stack* ptrStack, u_int32_t index){
     int j;
-  /*int flag = 1;
-    for(j = 0; flag && a[j] != '\0' && *stack_r_int32(ptrAStack, index, j) != '\0'; j++) {
-        if (a[j] != *stack_r_int32(ptrAStack, index, j)) flag = 0;
-    }
-    if(flag && a[j] == '\0' && *stack_r_int32(ptrAStack, index, j) == '\0')
-        return 1;
-    return 0;*/
-
     j = 0;
     while(a[j] != '\0' && *stack_r_int32(ptrStack, index, j) != '\0'
           && a[j] == *stack_r_int32(ptrStack, index, j)) {
@@ -152,49 +180,71 @@ int getOp(FILE *input, unsigned int *ptrLineNum, int op[]) {
     return i;
 }
 
+///Подфункция getType
+int checkConst16(const int op[]){
+    if(op[1] == '\0')
+        return Error;
+    for (int i = 1; op[i] != '\0'; i++)
+        if (!isdigit(op[i]) && (op[i] < 'A' || op[i] > 'F')) return Error;
+    return Const16;
+}
+
+///Подфункция getType
+int checkConst10(const int op[]){
+    if(op[1] == '\0')
+        return Error;
+    for(int i = 1; op[i] != '\0'; i++)
+        if(!isdigit(op[i])) return Error;
+    return Const10;
+}
+
+///Подфункция getType
+int checkReg(const int op[]){
+    for(int i = 0; i < CountOfRegs; i++){
+        if(compareStrIntChar(&op[1], registers_[i]))
+            return Register + i;
+    }
+    return Error;
+}
+
+///Подфункция getType
+int checkPtr(const int op[]){
+    int i;
+    int endIsNotReached = 1;
+    int count = 0; //кол-во ';'
+    for(i = 1; op[i] != '\0' && endIsNotReached && count < 3; i++){
+        if(op[i] == ';')
+            count++;
+        else if(op[i] == ')')
+            endIsNotReached = 0;
+        else if(op[i] == '(')
+            return Error;
+    }
+    if(op[i] == '\0' && !endIsNotReached)
+        return Pointer;
+    else
+        return Error;
+}
+
+int checkOthers(const int op[]){
+
+}
+
 ///Отображает множество строк на множество целых чисел *три крутых смайлика*\n
 ///Ну или это словарь операторов и операндов, если по-человечески
 int getType(const int op[]){        //FIXME переписать
     int i;
-    if(op[0] == '$') { //const 16-digit
-        if(op[1] == '\0')
-            return Error;
-        for (i = 1; op[i] != '\0'; i++)
-            if (!isdigit(op[i]) && (op[i] < 'A' || op[i] > 'F')) return Error;
-        return Const16;
-    }
-    if(op[0] == '!'){
-        if(op[1] == '\0')
-            return Error;
-        for(i = 1; op[i] != '\0'; i++)
-            if(!isdigit(op[i])) return Error;
-        return Const10;
-    }
-    if(op[0] == '%'){ //reg
-        for(i = 0; i < CountOfRegs; i++){
-            if(compareStrIntChar(&op[1], registers_[i]))
-                return Register + i;
-        }
-        return Error;
-    }
-    if(op[0] == '('){ //ptr
-        int endFlag = 1;        //FIXME
-        int count = 0; //кол-во ';'
-        for(i = 1; op[i] != '\0' && endFlag && count < 3; i++){
-            if(op[i] == ';')
-                count++;
-            else if(op[i] == ')')
-                endFlag = 0;
-            else if(op[i] == '(')
-                return Error;
-        }
-        if(op[i] == '\0' && !endFlag)
-            return Pointer;
-        else
-            return Error;
-    }
+    if(op[0] == '$') //const 16-digit
+        return checkConst16(op);
+    if(op[0] == '!') //const 10-digit
+        return checkConst10(op);
+    if(op[0] == '%') //reg
+        return checkReg(op);
+    if(op[0] == '(') //ptr
+        return checkPtr(op);
     if(op[0] == '.')
         return Label;
+
     if(compareStrIntChar(op, operators_[0]))
         return MOV_reg_reg;
     if(compareStrIntChar(op, operators_[1]))
@@ -208,6 +258,7 @@ int getType(const int op[]){        //FIXME переписать
     for(i = 0; i < 3; i++)
         if(compareStrIntChar(op, operators_[29 + i]))
             return QUAD + i; //DV DA
+
     if(op[0] == '\0') return Nothing;
     return NotDefined;
 }
@@ -396,7 +447,6 @@ int processType1Ptr(Stack* ptrProgram, Defines def, int type1, char *code, int b
             *code += 0b000;
             temp = (char)(type1 - Register);
             push(ptrProgram, &temp);
-            pushZeros(ptrProgram, 3);
             break;
         case Label:
             *code += 0b100;
@@ -421,7 +471,6 @@ int processType2Ptr(Stack *ptrProgram,int type2, char *code, int buff2[]){
             *code += 0b000;
             temp =  (char)(type2 - Register);
             push(ptrProgram, &temp);
-            pushZeros(ptrProgram, 3);
             break;
         case Const16:
             *code +=0b010;
@@ -450,7 +499,6 @@ int processType3Ptr(Stack* ptrProgram, int type3, char *code, int buff3[]){
             *code += 0b000;
             temp = (char)(type3 - Register);
             push(ptrProgram, &temp);
-            pushZeros(ptrProgram, 3);
             break;
         case Const16:
             *code +=0b001;

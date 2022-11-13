@@ -1,10 +1,8 @@
-MOV %ax !10
 MOV %bx .label
-DV var1
-MOV var1 %bx
-CALL var1
+CALL (%bx)
 END
 
 .label
+MOV %ax !10
 PRINT %ax
 RET
