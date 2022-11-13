@@ -1,0 +1,12 @@
+MOV %ax !4
+MOV %bx !3
+CALL .func
+POP %cx
+PRINT %cx
+END
+
+.func
+PUSH %ax
+PUSH %bx
+SUB
+RET

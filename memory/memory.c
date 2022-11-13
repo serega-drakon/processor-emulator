@@ -356,9 +356,9 @@ void *push(Stack *ptrStack, const void *ptrValue) {
 void *pop(Stack *ptrStack) {
     if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) { //ебать костыль соорудил, зато работает!
         --ptrStack->pos;
-        //void *buffPtr = malloc(ptrStack->size);
-        //myMemCpy(buffPtr, stack_main(ptrStack, READ, ptrStack->pos, NULL), ptrStack->size);
-        //stack_reset_pos(ptrStack, ptrStack->pos);
+        //void *buffPtr = malloc(ptrAStack->size);
+        //myMemCpy(buffPtr, stack_main(ptrAStack, READ, ptrAStack->pos, NULL), ptrAStack->size);
+        //stack_reset_pos(ptrAStack, ptrAStack->pos);
         return stack_main(ptrStack, READ, ptrStack->pos, NULL);         //FIXME!!! утечка памяти
     }
     else

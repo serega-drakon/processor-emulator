@@ -7,7 +7,7 @@
 #define MAXOP 100
 #define NONE (-1)
 
-///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки)
+///Вывод ошибки name с выводом операнда op, возвращает 1 (с выводом строки) //FIXME:переделать на ""
 #define PRINT_ERROROP_1(name, op) do {                  \
 printf("line %d: %s \n", lineNum + 1, #name);   \
 for (int index = 0; op[index] != '\0'; index++) \
@@ -68,6 +68,7 @@ const char *operators_[] = {
         "CMP",
         "JMP",
         "JE",
+        "JNE",
         "JZ",
         "JG",
         "JGE",
@@ -110,10 +111,10 @@ int compareStrIntChar(const int a[], const char b[]){
 int compareStrStack(const int a[], Stack* ptrStack, u_int32_t index){
     int j;
   /*int flag = 1;
-    for(j = 0; flag && a[j] != '\0' && *stack_r_int32(ptrStack, index, j) != '\0'; j++) {
-        if (a[j] != *stack_r_int32(ptrStack, index, j)) flag = 0;
+    for(j = 0; flag && a[j] != '\0' && *stack_r_int32(ptrAStack, index, j) != '\0'; j++) {
+        if (a[j] != *stack_r_int32(ptrAStack, index, j)) flag = 0;
     }
-    if(flag && a[j] == '\0' && *stack_r_int32(ptrStack, index, j) == '\0')
+    if(flag && a[j] == '\0' && *stack_r_int32(ptrAStack, index, j) == '\0')
         return 1;
     return 0;*/
 
@@ -200,12 +201,12 @@ int getType(const int op[]){        //FIXME переписать
         return PUSH_reg;
     if(compareStrIntChar(op, operators_[2]))
         return POP_reg;
-    for(i = 0; i < 25; i++){
+    for(i = 0; i < 26; i++){
         if(compareStrIntChar(op, operators_[3 + i]))
             return ADD + i; //возвращает код операнда
     }
     for(i = 0; i < 3; i++)
-        if(compareStrIntChar(op, operators_[28 + i]))
+        if(compareStrIntChar(op, operators_[29 + i]))
             return QUAD + i; //DV DA
     if(op[0] == '\0') return Nothing;
     return NotDefined;
@@ -390,8 +391,8 @@ int getOpsPtr(int op[], int buff1[], int buff2[], int buff3[]){
 int processType1Ptr(Stack* ptrProgram, Defines def, int type1, char *code, int buff1[]){
     char temp;
     switch(type1){
-        case Register: case Register + 1: case Register + 2: case Register + 3:
-        case Register + 4:case Register + 5: case Register + 6: case Register + 7:
+        case RegAX: case RegBX: case RegCX: case RegDX:
+        case RegSI: case RegDI: case RegSP: case RegDP:
             *code += 0b000;
             temp = (char)(type1 - Register);
             push(ptrProgram, &temp);
@@ -415,8 +416,8 @@ int processType1Ptr(Stack* ptrProgram, Defines def, int type1, char *code, int b
 int processType2Ptr(Stack *ptrProgram,int type2, char *code, int buff2[]){
     char temp;
     switch(type2){
-        case Register: case Register + 1: case Register + 2: case Register + 3:
-        case Register + 4:case Register + 5: case Register + 6: case Register + 7:
+        case RegAX: case RegBX: case RegCX: case RegDX:
+        case RegSI: case RegDI: case RegSP: case RegDP:
             *code += 0b000;
             temp =  (char)(type2 - Register);
             push(ptrProgram, &temp);
@@ -444,8 +445,8 @@ int processType2Ptr(Stack *ptrProgram,int type2, char *code, int buff2[]){
 int processType3Ptr(Stack* ptrProgram, int type3, char *code, int buff3[]){
     char temp;
     switch(type3){
-        case Register: case Register + 1: case Register + 2: case Register + 3:
-        case Register + 4:case Register + 5: case Register + 6: case Register + 7:
+        case RegAX: case RegBX: case RegCX: case RegDX:
+        case RegSI: case RegDI: case RegSP: case RegDP:
             *code += 0b000;
             temp = (char)(type3 - Register);
             push(ptrProgram, &temp);
@@ -545,8 +546,8 @@ unsigned char getCodeMov(int type1, int type2, int* errorCheck){
 int processType1Mov(Stack* ptrProgram, Defines def, int type1, u_int32_t *lineNum, int op[]){
     unsigned char code;
     switch (type1) {
-        case Register: case Register + 1: case Register + 2: case Register + 3:
-        case Register + 4: case Register + 5: case Register + 6: case Register + 7:
+        case RegAX: case RegBX: case RegCX: case RegDX:
+        case RegSI: case RegDI: case RegSP: case RegDP:
             code = (unsigned char) (type1 - Register);
             push(ptrProgram, &code);
             break;
@@ -565,8 +566,8 @@ int processType1Mov(Stack* ptrProgram, Defines def, int type1, u_int32_t *lineNu
 int processType2Mov(Stack* ptrProgram, Defines def, int type2, u_int32_t *lineNum, int op2[]){
     unsigned char code;
     switch (type2) {
-        case Register: case Register + 1: case Register + 2: case Register + 3:
-        case Register + 4: case Register + 5: case Register + 6: case Register + 7:
+        case RegAX: case RegBX: case RegCX: case RegDX:
+        case RegSI: case RegDI: case RegSP: case RegDP:
             code = (unsigned char) (type2 - Register);
             push(ptrProgram, &code);
             break;
@@ -577,6 +578,7 @@ int processType2Mov(Stack* ptrProgram, Defines def, int type2, u_int32_t *lineNu
             processConst10D(ptrProgram, op2);
             break;
         case Pointer:
+        case NotDefined:
             if(processPointer(ptrProgram, def, lineNum, op2))
                 PRINT_ERROROP2_1(Error ptr, op2);
             break;
@@ -766,7 +768,29 @@ int processQuad(FILE* input, Stack* ptrProgram,Defines def, unsigned int *lineNu
         return 0;
     }
     else
-        PRINT_ERROR2(There are no arg for quad);
+        PRINT_ERROR2(There are no arg for QUAD);
+}
+
+int processPrintReg(FILE* input, Stack* ptrProgram, unsigned  int *lineNum){
+    int op[MAXOP];
+    int type;
+    unsigned char code = PRINT_reg;
+    push(ptrProgram, &code);
+    if(getOp(input, lineNum, op) > 0){
+        type = getType(op);
+        switch(type){
+            case RegAX: case RegBX: case RegCX: case RegDX:
+            case RegSI: case RegDI: case RegSP: case RegDP:
+                code = (unsigned char) (type - Register);
+                push(ptrProgram, &code);
+                break;
+            default:
+                PRINT_ERROROP2_1(Invalid arg for PRINT, op);
+        }
+    }
+    else
+        PRINT_ERROR2(There are no arg for PRINT);
+    return 0;
 }
 
 ///Сверка таблиц использованных и объявленных меток
@@ -825,7 +849,7 @@ int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar) {
                 processOneByte(ptrProgram, type);
                 break;
             //операнды с переменной длиной, весят по 5 байт в случае если переход по метке, 14 байт, если переход по ссылке
-            case JMP_lbl: case JE_lbl: case JZ_lbl: case JG_lbl:
+            case JMP_lbl: case JE_lbl: case JNE_lbl: case JZ_lbl: case JG_lbl:
             case JGE_lbl: case JL_lbl: case JLE_lbl: case CALL_lbl:
                 if(processJmp(input, ptrProgram, def, &lineNum, type))
                     PRINT_ERROR(Error Jmp);
@@ -849,6 +873,10 @@ int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar) {
             case END:
                 processOneByte(ptrProgram, type);
                 endFlag = 1;
+                break;
+            case PRINT_reg:
+                if(processPrintReg(input, ptrProgram, &lineNum))
+                    PRINT_ERROR(Error PRINT_reg);
                 break;
             default:
                 PRINT_ERROROP_1(Unknown operator, op);

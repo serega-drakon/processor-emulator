@@ -1,4 +1,10 @@
-
-DV name
-MOV name %ax
+MOV %ax !10
+MOV %bx .label
+DV var1
+MOV var1 %bx
+CALL var1
 END
+
+.label
+PRINT %ax
+RET

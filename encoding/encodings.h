@@ -22,10 +22,10 @@ enum encodingOps_{
     IDIV, AND, OR, XOR,
     NOT, NEG, SHL, SHR,
     SHRL, CMP,
-    JMP_lbl, JE_lbl, JZ_lbl, JG_lbl,
+    JMP_lbl, JE_lbl, JNE_lbl, JZ_lbl, JG_lbl,
     JGE_lbl, JL_lbl, JLE_lbl, CALL_lbl,
     RET, END, PRINT_reg,
-    JMP_ptr, JE_ptr, JZ_ptr, JG_ptr,
+    JMP_ptr, JE_ptr, JNE_ptr, JZ_ptr, JG_ptr,
     JGE_ptr, JL_ptr, JLE_ptr, CALL_ptr, //варианты когда нужно перейти по значению, лежащему по данной ссылке
 
 };
@@ -41,7 +41,15 @@ enum others_{
     Const16 = Register + CountOfRegs,
     Const10,
     Pointer,
-    Label
+    Label,
+    RegAX = Register,
+    RegBX,
+    RegCX,
+    RegDX,
+    RegSI,
+    RegDI,
+    RegSP,
+    RegDP,
 };
 
 ///Кодировка всех регистров

@@ -14,6 +14,7 @@ int main() {
     printf("||%d:", status = compileFile(input, ptrProgram, &bytesForVar)); //debug
     for(int i = 0; i < getsize(ptrProgram); i++)
         printf("|%d ", *((char*)stack_r(ptrProgram,i)));
+    printf("\n");
 
     if(!status)
         processor_main(ptrProgram, bytesForVar);
