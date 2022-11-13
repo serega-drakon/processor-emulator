@@ -365,6 +365,14 @@ void doInc(Processor *ptrProc){
     push(ptrProc->ptrAStack, &result);
 }
 
+void doDec(Processor *ptrProc){
+    if(getsize(ptrProc->ptrAStack) < 1)
+        printf("Stack is empty\n");
+    const int32_t value = *(int32_t*) pop(ptrProc->ptrAStack);
+    const int32_t result = value - 1;
+    push(ptrProc->ptrAStack, &result);
+}
+
 void doImul(Processor *ptrProc){
     if(getsize(ptrProc->ptrAStack) < 2)
         printf("Stack is empty\n");
@@ -639,6 +647,9 @@ int processor_main(Stack *ptrProgram, u_int32_t bytesForVar) {
                 break;
             case INC:
                 doInc(&proc);
+                break;
+            case DEC:
+                doDec(&proc);
                 break;
             case IMUL:
                 doImul(&proc);

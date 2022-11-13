@@ -2,7 +2,6 @@
 #define PROCESSOR_EMULATOR_ENCODINGS_H
 
 #define REG_SIZE 4          //Размер регистра
-#define POINTER_SIZE 13     //Размер указателя
 
 ///Это не кодировка, а просто перечисление количества соответствущих типов команд
 enum count_{
@@ -18,7 +17,7 @@ enum encodingOps_{
     MOV_mem_const,
     PUSH_reg,
     POP_reg,
-    ADD, SUB, INC, IMUL,
+    ADD, SUB, INC, DEC, IMUL,
     IDIV, AND, OR, XOR,
     NOT, NEG, SHL, SHR,
     SHRL, CMP,

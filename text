@@ -1,12 +1,29 @@
-MOV %ax !4
-MOV %bx !3
-CALL .func
-POP %cx
-PRINT %cx
-END
+MOV %si !20
+MOV %di !1
 
-.func
-PUSH %ax
+MOV %bx !0
+MOV %ax !1
+
+.label
+
+PUSH %di
+INC
+POP %di
+
+MOV %cx %bx
+MOV %bx %ax
+
+PUSH %cx
 PUSH %bx
-SUB
-RET
+ADD
+POP %ax
+
+PUSH %di
+PUSH %si
+CMP
+
+JNE .label
+
+PRINT %ax
+
+END

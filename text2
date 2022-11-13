@@ -34,15 +34,14 @@ RET
 
 PUSH %dp
 DEC
+POP %dp
 PUSH %dp
-DEC
 CALL .fibonachi
 
-POP %sp
-POP %dp
-PUSH %sp
 PUSH %dp
 DEC
+POP %dp
+PUSH %dp
 CALL .fibonachi
 
 ADD

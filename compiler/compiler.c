@@ -51,6 +51,7 @@ const char *operators_[] = {
         "ADD",
         "SUB",
         "INC",
+        "DEC",
         "IMUL",
         "IDIV",
         "AND",
@@ -87,6 +88,7 @@ enum strOps_{
     strADD,
     strSUB,
     strINC,
+    strDEC,
     strIMUL,
     strIDIV,
     strAND,
@@ -242,6 +244,8 @@ int checkOthers(const int op[]){
             return SUB;
         case strINC:
             return INC;
+        case strDEC:
+            return DEC;
         case strIMUL:
             return IMUL;
         case strIDIV:
@@ -949,9 +953,9 @@ int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar) {
                 if(processPushPop(input, ptrProgram, &lineNum, type))
                     PRINT_ERROR(Error push pop);
                 break;
-            case ADD: case SUB: case INC: case IMUL: case IDIV: case AND: case OR: //однобайтные операнды
-            case XOR: case NOT: case NEG: case SHL: case SHR: case SHRL: case CMP:
-            case RET:
+            case ADD: case SUB: case INC: case DEC: case IMUL: case IDIV: case AND:
+            case OR: case XOR: case NOT: case NEG: case SHL: case SHR: case SHRL:
+            case CMP: case RET: //однобайтные операнды
                 processOneByte(ptrProgram, type);
                 break;
             //операнды с переменной длиной, весят по 5 байт в случае если переход по метке, 14 байт, если переход по ссылке

@@ -49,7 +49,8 @@ For an example:
 
 1. **ADD**  – op1 = op1 + op2.
 2. **SUB** – op1 = op1 - op2.
-3. **INC** – op++, op--.
+3. **INC** – op++.
+4. **DEC** - op--.
 4. **IMUL** – op1 *= op2, op0 = op1 * op2.
 5. **IDIV** – op1 /= op2, op0 = op1 / op2.
 6. **AND, OR, XOR** – op1 = op1 &|^ op2. //bitwise operator
