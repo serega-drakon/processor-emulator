@@ -1,8 +1,29 @@
-MOV %bx .label
-CALL (%bx)
-END
+MOV %si !20
+MOV %di !1
+
+MOV %bx !0
+MOV %ax !1
 
 .label
-MOV %ax !10
+
+PUSH %di
+INC
+POP %di
+
+MOV %cx %bx
+MOV %bx %ax
+
+PUSH %cx
+PUSH %bx
+ADD
+POP %ax
+
+PUSH %di
+PUSH %si
+CMP
+
+JNE .label
+
 PRINT %ax
-RET
+
+END
