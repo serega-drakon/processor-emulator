@@ -40,9 +40,7 @@ For an example:
 ### Data Movement Instructions:
 
 1. #### MOV \<op1> \<op2> – op2 = op1
-###### Потом тут всякие варики типа movq накидать
 2. #### PUSH \<reg>
-###### а сюда описание (но пока думаю понятно что это делает)
 3. #### POP \<reg>
 
 ### Stack arithmetic and logic instructions (Справа приписал Си-аналоги выражений):
