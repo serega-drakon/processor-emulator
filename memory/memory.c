@@ -368,9 +368,10 @@ void *push(Stack *ptrStack, const void *ptrValue) {
         EXIT;
 }
 
+//FIXME: стек не умеет уменьшаться
 /// Stack function: Pop
 void *pop(Stack *ptrStack) {
-    if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) { //ебать костыль соорудил, зато работает!
+    if (!stackErrorCheck(ptrStack) && ptrStack->pos > 0) {
         --ptrStack->pos;
         myMemCpy(ptrStack->buffForPop, stack_main_read(ptrStack, ptrStack->pos), ptrStack->sizeOfElement);
         stack_reset_pos(ptrStack, ptrStack->pos);

@@ -955,7 +955,7 @@ int compileFile(FILE *input, Stack *ptrProgram, u_int32_t *ptrBytesForVar) {
                 break;
             case ADD: case SUB: case INC: case DEC: case IMUL: case IDIV: case AND:
             case OR: case XOR: case NOT: case NEG: case SHL: case SHR: case SHRL:
-            case CMP: case RET: //однобайтные операнды
+            case CMP: case RET: //однобайтовые операнды
                 processOneByte(ptrProgram, type);
                 break;
             //операнды с переменной длиной, весят по 5 байт в случае если переход по метке, 14 байт, если переход по ссылке
